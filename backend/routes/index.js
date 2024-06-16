@@ -10,5 +10,6 @@ router.use('/searchgizi', require('./searchgiziRoutes'));
 router.use('/for-you', require('./forYouRoutes'));
 router.use('/', require('./addinfoRoutes'))
 router.use('/admin', require('./adminRoutes'));
+router.use('/coba', require('./cobaRoutes'));
 
 module.exports = router;
