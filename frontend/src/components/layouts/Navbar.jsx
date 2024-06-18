@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useRef, useState, useContext } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Link } from "react-scroll";
 import Logo from "/kitchen-craft-logo.svg";
@@ -14,6 +14,8 @@ import {
 } from "../features/ModalProfile";
 import Login from "../../pages/Login";
 import Register from "../../pages/Register";
+import { Modal, Button, Checkbox, Label, TextInput } from "flowbite-react";
+
 
 export default function Navbar() {
   const [toggleHamburger, setToggleHamburger] = useState(false);
@@ -30,6 +32,9 @@ export default function Navbar() {
     setSearchFocus(!searchFocus);
     console.log(input);
   };
+
+  const [openLogin, setOpenLogin] = useState (false);
+  const [openRegister, setOpenRegister] = useState (false);
 
   const hoverNav = "hover:text-accent-2 transition-all";
 
@@ -173,13 +178,29 @@ export default function Navbar() {
                   className="h-10"
                   name="Masuk"
                   btnStroke={true}
-                  onClick={() => console.log("Login")}
+                    onClick={() => setOpenLogin(true)}
                 />
                 <RoundedButton
                   className="h-10"
                   name="Daftar"
-                  onClick={() => console.log("Daftar")}
+                    onClick={() => setOpenRegister(true)}
                 />
+
+                  <Modal show={openLogin} size="md" popup onClose={() => setOpenLogin(false)} className="bg-black shadow bg-opacity-65">
+                    <Modal.Header />
+                    <Modal.Body>
+                      <Login />
+                    </Modal.Body>
+                  </Modal>
+
+                  <Modal show={openRegister} size="md" popup onClose={() => setOpenRegister(false)} className="bg-black shadow bg-opacity-65">
+                    <Modal.Header />
+                    <Modal.Body>
+                      <Register />
+                    </Modal.Body>
+                  </Modal>
+
+
               </div>
             </div>
           </>
@@ -189,54 +210,42 @@ export default function Navbar() {
   );
 }
 
+
+
+// Modal Login & Register
 function AuthButton() {
-  const [showModal, setShowModal] = useState(false);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [openLogin, setOpenLogin] = useState(false);
+  const [openRegister, setOpenRegister] = useState(false);
 
   return (
-    <div className="ml-3 hidden gap-2 sm:ml-6 lg:flex">
-      <RoundedButton
-        name="Masuk"
-        btnStroke={true}
-        onClick={() => setShowModal(true)}
-      />
+    <div >
 
-      {/* Modal Login */}
-      {showModal && (
-        <Modal onClose={() => setShowModal(false)}>
-          <Login />
-        </Modal>
-      )}
-
-      <RoundedButton
-        className="h-10"
-        name="Daftar"
-        onClick={() => setShowRegisterModal(true)}
-      />
-
-      {/* Modal Register */}
-      {showRegisterModal && (
-        <Modal onClose={() => setShowRegisterModal(false)}>
-          <Register />
-        </Modal>
-      )}
-    </div>
-  );
-}
-
-// Desain Modal
-function Modal({ children, onClose }) {
-  return (
-    <div className="fixed inset-0 z-10 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="relative mx-2 w-full max-w-md rounded-lg bg-white p-1 shadow-lg">
-        <button className="absolute right-2 top-2 text-black" onClick={onClose}>
-          <span>x</span>
-        </button>
-        {children}
+      <div className="ml-3 hidden gap-2 sm:ml-6 lg:flex">
+        <RoundedButton name="Masuk" btnStroke={true} onClick={() => setOpenLogin(true)} />
+        <RoundedButton
+          className="h-10"
+          name="Daftar"
+          onClick={() => setOpenRegister(true)}
+        />
       </div>
+      <Modal show={openLogin} size="md" popup onClose={() => setOpenLogin(false)} className="bg-black shadow bg-opacity-65">
+        <Modal.Header />
+        <Modal.Body>
+        <Login/>
+        </Modal.Body>
+      </Modal>
+
+      <Modal show={openRegister} size="md" popup onClose={() => setOpenRegister(false)} className="bg-black  bg-opacity-65">
+        <Modal.Header />
+        <Modal.Body>
+        <Register/>
+        </Modal.Body>
+      </Modal>
+
     </div>
   );
 }
+// Akhir Modal Login & Register
 
 function Profile() {
   const { toggle, setToggle } = useContext(ModalProfileContext);

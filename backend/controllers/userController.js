@@ -13,14 +13,14 @@ const registerUser = async (req, res) => {
 
         // Check if fullName was entered
         if (!fullName) {
-            return res.json({
+            return res.status(400).json({
                 error: "Name is required"
             });
         }
 
         // Check if password is good
         if (!password || password.length < 6) {
-            return res.json({
+            return res.status(400).json({
                 error: "Password is required and should be at least 6 characters long"
             });
         }
@@ -29,18 +29,18 @@ const registerUser = async (req, res) => {
         const unameExist = await User.findOne({ username });
 
         if (unameExist) {
-            return res.json({
+            return res.status(400).json({
                 error: "username already exists"
-            })
+            });
         }
 
         // Check if email was exists
         const exist = await User.findOne({ email });
 
         if (exist) {
-            return res.json({
+            return res.status(400).json({
                 error: "Email already exists"
-            })
+            });
         }
 
         const hashedPassword = await hashPassword(password);
@@ -54,7 +54,7 @@ const registerUser = async (req, res) => {
         });
         await user.save();
 
-        res.json(
+        res.status(200).json(
             {
                 message: "User created successfully!",
                 fullName,
@@ -83,12 +83,12 @@ const getUser = async (req, res) => {
             .skip(skip)
             .limit(limit);
         if (!user) {
-            return res.json({
+            return res.status(404).json({
                 error: "User not found"
             });
         }
 
-        res.json({
+        res.status(200).json({
             user,
             recipe
         });
@@ -127,7 +127,7 @@ const getUserSavedRecipes = async (req, res) => {
         // Get recipes by ids
         const recipes = await Recipe.find({ _id: { $in: recipeIds } }).select("_id user_id title image total_time likes category");
 
-        res.json({
+        res.status(200).json({
             recipes,
             totalPages,
             currentPage: page,
@@ -168,7 +168,7 @@ const getUserLikedRecipes = async (req, res) => {
         // Get recipes by ids
         const recipes = await Recipe.find({ _id: { $in: recipeIds } }).select("_id user_id title image total_time likes category");
 
-        res.json({
+        res.status(200).json({
             recipes,
             totalPages,
             currentPage: page,
@@ -208,7 +208,7 @@ const editUser = async (req, res) => {
 
         await user.save();
 
-        res.json({
+        res.status(200).json({
             message: "User profile updated successfully"
         });
 
@@ -228,7 +228,7 @@ const deleteUser = async (req, res) => {
         const { password } = req.body;
 
         if (!password) {
-            return res.json({
+            return res.status(400).json({
                 error: "Password is required"
             });
         }
@@ -237,7 +237,7 @@ const deleteUser = async (req, res) => {
         const user = await User.findOne({ username: req.params.username }).select("password");
 
         if (!user) {
-            return res.json({
+            return res.status(404).json({
                 error: "User not found"
             });
         }
@@ -246,8 +246,7 @@ const deleteUser = async (req, res) => {
 
         // Check if password is correct
         if (!isMatch) {
-
-            return res.json({
+            return res.status(400).json({
                 error: "Incorrect password"
             });
 
@@ -255,7 +254,7 @@ const deleteUser = async (req, res) => {
 
             // Delete user
             await user.deleteOne();
-            res.json({
+            res.status(200).json({
                 message: "User deleted successfully"
             });
 

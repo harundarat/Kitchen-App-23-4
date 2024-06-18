@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import RoundedButton from "../components/common/RoundedButton";
 import Logo from "/kitchen-craft-logo.svg";
 import { UserContext } from "../context/userContext";
+import { Button, Checkbox, Label, Modal, TextInput } from "flowbite-react";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -34,57 +35,55 @@ export default function Login() {
   };
 
   return (
-    <div className="">
+    <div className="space-y-6">
+      <h3 className="text-xl font-medium text-gray-900 dark:text-white">Sign in to our platform</h3>
       <form
         onSubmit={(e) => loginUser(e)}
-        className="m-20 flex flex-col items-center justify-center"
-      >
-        <h2 className="text-center font-serif text-2xl font-semibold text-black">
-          Welcome!
-        </h2>
-        <h3 className="text-center font-serif text-2xl font-semibold text-black">
-          To
-        </h3>
-        <img src={Logo} alt="" className="mx-auto mt-1 w-32 sm:w-[118px]" />
-        <h5 className="mt-1 font-serif text-black">
-          Time to cook, let’s Sign In
-        </h5>
-
-        <div className="mt-3 w-full max-w-md">
-          <label className="mb-2 block text-base font-semibold text-black">
-            Email
-          </label>
-          <input
-            className="w-full rounded border border-black p-1 shadow-sm transition duration-300 focus:outline-none focus:ring focus:ring-blue-100"
-            type="email"
-            placeholder="enter email..."
+         >
+        <div className="mb-5">
+          <div className="mb-2 block">
+            <Label htmlFor="email" value="Your email" />
+          </div>
+          <TextInput
+            id="email"
+            placeholder="name@company.com"
             value={data.email}
             onChange={(e) => setData({ ...data, email: e.target.value })}
+            required
           />
         </div>
-        <div className="mt-4 w-full max-w-md">
-          <label className="mb-2 block text-base font-semibold text-black">
-            Password
-          </label>
-          <input
-            className="w-full rounded border border-black p-1 shadow-sm transition duration-300 focus:outline-none focus:ring focus:ring-blue-100"
-            type="password"
-            placeholder="enter password..."
+
+        <div className="mb-5">
+          <div className="mb-2 block">
+            <Label htmlFor="password" value="Your password" />
+          </div>
+          <TextInput id="password" type="password" required 
             value={data.password}
             onChange={(e) => setData({ ...data, password: e.target.value })}
           />
         </div>
-        <a href="#" className="mt-2 text-black">
-          Forgot Password?
-        </a>
+
+        <div className="flex justify-between gap-5 mb-4">
+          <div className="flex items-center gap-2">
+            <Checkbox id="remember" />
+            <Label htmlFor="remember">Remember me</Label>
+          </div>
+          <a href="#" className="text-sm text-cyan-700 hover:underline dark:text-cyan-500">
+            Lost Password?
+          </a>
+        </div>
+
         <RoundedButton
-          name="Sign In"
-          className="mt-2 w-60 rounded text-white"
+          name="Sign In to your account"
+          className="mt-2 rounded-lg text-white w-48 mb-4 text-sm py-2"
         />
 
-        <a href="#" className="mt-3 text-black">
-          Don’t have an Account? <span className="font-semibold">Sign Up</span>
-        </a>
+        <div className="flex justify-between text-sm font-medium text-gray-500 dark:text-gray-300">
+          Not registered?&nbsp;
+          <a href="#" className="text-cyan-700 hover:underline dark:text-cyan-500">
+            Create account
+          </a>
+        </div>
       </form>
     </div>
   );

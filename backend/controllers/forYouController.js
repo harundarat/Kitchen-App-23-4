@@ -13,7 +13,6 @@ const forYouController = async (req, res) => {
 
             const userPreferences = await User.findOne({ username: req.user.username }).select("preferences");
             const preferences = userPreferences.preferences;
-            // res.json({ preferences })
 
             const rawRecipes = await Recipe.find({ category: { $in: preferences } }).select("_id user_id title image total_time likes category")
                 .populate({ path: "user_id", select: "fullName image" })
@@ -66,14 +65,14 @@ const forYouController = async (req, res) => {
 
         }
 
-        return res.json({
+        return res.status(200).json({
             recipes
         })
 
     } catch (error) {
         console.log(error);
         res.status(500).json({
-            error: "Internal Server Error"
+            error: "Internal server error"
         })
     }
 

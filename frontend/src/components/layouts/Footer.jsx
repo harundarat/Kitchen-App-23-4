@@ -5,14 +5,14 @@ const Footer = () => {
     return (
         <section>
             <div className="mt-6 bg-footer lg:flex lg:gap-1 lg:p-10 lg:items-center lg:w-full lg:justify-center lg:m-0">
-                <div className="flex items-center w-full px-2 gap-1 lg:flex-col lg:items-start lg:w-96">
+                <div className="flex items-center w-full px-3 gap-1 pt-5  lg:flex-col lg:items-start lg:w-96">
                     <img src={Logo} alt="logo" width="130" className="px-1 lg:w-44" />
                     <p className="ml-2 text-black font-semibold text-sm lg:ml-0 lg:mt-2">
                         Temukan berbagai resep lezat yang mudah diikuti dan cocok untuk segala suasana.
                     </p>
                 </div>
 
-                <div className="mt-5 px-3 flex w-full gap-5 lg:gap-10 lg:ml-10 lg:w-auto">
+                <div className="mt-5 px-3 justify-center flex w-full gap-5 lg:gap-10 lg:ml-10 lg:w-auto">
                     <div className="text-sm">
                         <h6 className="font-semibold">Resep Makanan</h6>
                         <p className="mt-1">Makanan Ringan</p>
@@ -23,10 +23,22 @@ const Footer = () => {
 
                     <div className="text-sm">
                         <h6 className="font-semibold">Informasi & Layanan</h6>
-                        <p className="mt-1">Tentang Kami</p>
-                        <p>Kontak</p>
-                        <p>Kirim Saran</p>
-                        <p>Kebijakan Privasi</p>
+                        <a className='mt-1' href='/about'>
+                            Tentang Kami
+                        </a>
+                        <p><a href='/about/kontak-saran'>
+                            Kontak
+                        </a></p>
+                        <p>
+                            <a href='/about/kontak-saran'>
+                                Kirim Saran
+                            </a>
+                        </p>
+                        <p>
+                            <a href='/about/privasi'>
+                                Kebijakan Privasi
+                            </a>
+                        </p>
                     </div>
 
                     <div className="text-sm">

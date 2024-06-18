@@ -1,7 +1,10 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
 const { getPaginatedRecipes, getRecipeById, createRecipe, editRecipe, deleteRecipe, toggleLikeRecipe, saveRecipe } = require("../controllers/recipeController");
 const { authenticate, authCheck, verifyRecipeAuthor } = require("../middleware/auth");
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 // Get paginated recipes
 router.get("/", getPaginatedRecipes);
@@ -10,7 +13,7 @@ router.get("/", getPaginatedRecipes);
 router.get("/:id", authCheck, getRecipeById);
 
 // Create recipe
-router.post("/", authenticate, createRecipe);
+router.post("/", authenticate, upload.fields([{ name: "image", maxCount: 1 }, { name: "stepImages" }]), createRecipe);
 
 // Edit recipe
 router.put("/:id", authenticate, verifyRecipeAuthor, editRecipe);

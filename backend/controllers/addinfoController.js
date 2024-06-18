@@ -6,20 +6,20 @@ const getIngredients = async (req, res) => {
         res.status(200).json(Ingredients[0]);
     } catch (error) {
         console.log(error);
-        res.json({
-            error: "Server error"
+        res.status(500).json({
+            error: "Internal server error"
         });
     }
 }
 
-const getCategory = async (req ,res) => {
+const getCategory = async (req, res) => {
     try {
         const Category = await AddInfo.find().select('category -_id');
         res.status(200).json(Category[0]);
     } catch (error) {
         console.log(error);
-        res.json({
-            error: "Server error"
+        res.status(500).json({
+            error: "Internal server error"
         });
     }
 }

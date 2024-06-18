@@ -43,6 +43,9 @@ function App() {
         <Route path="/recipe/input" element={<InputRecipe />} />
         <Route path="/resep" element={<Resep />} />
         <Route path="*" element={<NotFound />} />
+        <Route path="/about" element={<About/>}/>
+        <Route path="/about/privasi" element={<Privasi/>}/>
+        <Route path="/about/Kontak-saran" element={<KontakSaran/>}/>
       </Routes>
       {showNavFoot && <Footer />}
     </UserContextProvider>

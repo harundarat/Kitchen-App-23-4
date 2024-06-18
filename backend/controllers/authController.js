@@ -12,7 +12,7 @@ const loginUser = async (req, res) => {
         if (isValid) {
             data = filteredReq
         } else {
-            return res.json({
+            return res.status(400).json({
                 code: "BAD_REQUEST_LOGIN",
                 error: "Invalid request body"
             })
@@ -21,7 +21,7 @@ const loginUser = async (req, res) => {
         // Check if email exists
         const user = await User.findOne({ email: data.email });
         if (!user) {
-            return res.json({
+            return res.status(404).json({
                 code: "EMAIL_NOT_FOUND",
                 error: "Email does not exist"
             });
@@ -36,14 +36,14 @@ const loginUser = async (req, res) => {
                 res.cookie("token", token, {
                     httpOnly: true
                 });
-                res.json({
+                res.status(200).json({
                     id: user._id,
                     username: user.username,
                     token
                 })
             })
         } else {
-            return res.json({
+            res.status(401).json({
                 code: "PWD_NOT_MATCH",
                 error: "Password is incorrect"
             });
@@ -66,7 +66,7 @@ const logoutUser = (req, res) => {
         expires: new Date(0)
     });
 
-    res.json({
+    res.status(200).json({
         message: "Logged out successfully"
     });
 }

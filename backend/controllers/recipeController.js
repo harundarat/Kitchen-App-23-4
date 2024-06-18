@@ -4,6 +4,7 @@ const SaveRecipe = require("../models/saveRecipe");
 const Nutrition = require("../models/nutrition");
 const deepl = require('deepl-node');
 const axios = require('axios');
+const uploadImage = require("../utils/uploadImage");
 
 // Get paginated recipes
 const getPaginatedRecipes = async (req, res) => {
@@ -56,7 +57,7 @@ const getPaginatedRecipes = async (req, res) => {
             .skip((page - 1) * limit)
             .limit(limit);
 
-        res.json({
+        res.status(200).json({
             recipes,
             totalPages,
             currentPage: page,
@@ -65,8 +66,8 @@ const getPaginatedRecipes = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        res.json({
-            error: "Server error"
+        res.status(500).json({
+            error: "Internal server error"
         });
     }
 }
@@ -88,7 +89,7 @@ const getRecipeById = async (req, res) => {
 
         // Check if user is authenticated
         if (!req.user || !req.user.id) {
-            return res.json({
+            return res.status(200).json({
                 recipe: {
                     ...recipe._doc,
                     isLiked: false,
@@ -99,7 +100,7 @@ const getRecipeById = async (req, res) => {
             // Check if user has liked the recipe
             const userLike = await Like.findOne({ recipe_id: req.params.id, user_id: req.user.id });
 
-            res.json({
+            res.status(200).json({
                 recipe: {
                     ...recipe._doc,
                     isLiked: !!userLike,
@@ -111,8 +112,8 @@ const getRecipeById = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        res.json({
-            error: "Server error"
+        res.status(500).json({
+            error: "Internal server error"
         });
     }
 }
@@ -123,15 +124,15 @@ const createRecipe = async (req, res) => {
 
         // Get recipe data from request body
         const {
-            title,
-            image,
-            description,
-            total_time,
-            ingredients,
-            video,
-            stepDescription,
-            stepImage,
-            category
+            title, // Recipe title
+            image, // Recipe main image
+            description, // Recipe description
+            total_time, // Recipe total cooking time
+            ingredients, // Array of ingredients
+            video, // Recipe video
+            stepDescription, // Array of step descriptions
+            stepImage, // Array of step images
+            category // Array of categories
         } = req.body;
 
         // Create new recipe instance
@@ -152,6 +153,26 @@ const createRecipe = async (req, res) => {
             category
         });
 
+        // Handle image upload
+        if (req.files) {
+            const images = req.files;
+
+            if (images.image?.length === 1) {
+                const image = await uploadImage(`images/recipes/${recipe._id}/main.jpg`, images.image[0].buffer);
+                recipe.image = image;
+            }
+
+            if (images.stepImages?.length > 0) {
+                const stepImagesPromise = images.stepImages.map((image, order) => (uploadImage(`images/recipes/${recipe._id}/step-${order}.jpg`, image.buffer)));
+                const stepImages = await Promise.all(stepImagesPromise);
+                recipe.steps.step = recipe.steps.step.map((step, index) => ({
+                    ...step,
+                    image: stepImages[index]
+                }))
+            }
+
+        }
+
         // Get nutrition instance from ingredients
         const nutrition = await getNutrition(recipe._id, ingredients);
 
@@ -160,14 +181,14 @@ const createRecipe = async (req, res) => {
         await nutrition.save();
 
         // Send response
-        res.json({
+        res.status(200).json({
             message: "Recipe created successfully"
         });
 
     } catch (error) {
         console.log(error);
-        res.json({
-            error: "Server error"
+        res.status(500).json({
+            error: "Internal server error"
         });
     }
 }
@@ -242,14 +263,14 @@ const editRecipe = async (req, res) => {
         await Promise.all([recipePromise, nutritionPromise]);
 
         // Send response
-        res.json({
+        res.status(200).json({
             message: "Recipe updated successfully"
         });
 
     } catch (error) {
         console.log(error);
-        res.json({
-            error: "Server error"
+        res.status(500).json({
+            error: "Internal server error"
         });
     }
 }
@@ -283,14 +304,14 @@ const deleteRecipe = async (req, res) => {
         await recipe.deleteOne();
 
         // Send response
-        res.json({
+        res.status(200).json({
             message: "Recipe deleted successfully"
         });
 
     } catch (error) {
         console.log(error);
-        res.json({
-            error: "Server error"
+        res.status(500).json({
+            error: "Internal server error"
         });
     }
 
@@ -328,7 +349,7 @@ const toggleLikeRecipe = async (req, res) => {
             // Update recipe likes count
             await recipe.updateOne({ likes: recipe.likes + 1 });
 
-            res.json({
+            res.status(200).json({
                 message: "Recipe liked successfully"
             });
 
@@ -340,15 +361,15 @@ const toggleLikeRecipe = async (req, res) => {
             // Update recipe likes count
             await recipe.updateOne({ likes: recipe.likes - 1 });
 
-            res.json({
+            res.status(200).json({
                 message: "Recipe unliked successfully"
             });
         }
 
     } catch (error) {
         console.log(error);
-        res.json({
-            error: "Server error"
+        res.status(500).json({
+            error: "Internal server error"
         });
     }
 
@@ -383,7 +404,7 @@ const saveRecipe = async (req, res) => {
 
             await saveRecipe.save();
 
-            res.json({
+            res.status(200).json({
                 message: "Recipe saved successfully"
             });
 
@@ -392,15 +413,15 @@ const saveRecipe = async (req, res) => {
             // Unsave recipe
             await userSave.deleteOne();
 
-            res.json({
+            res.status(200).json({
                 message: "Recipe unsaved successfully"
             });
         }
 
     } catch (error) {
         console.log(error);
-        res.json({
-            error: "Server error"
+        res.status(500).json({
+            error: "Internal server error"
         });
     }
 
