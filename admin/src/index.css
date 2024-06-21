@@ -1,0 +1,48 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  font-family: "Outfit", sans-serif;
+  background: #fffefb;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+[role="dialog"] {
+  height: fit-content;
+}
+
+.bg-Sidebar {
+  background-color: #1a202c;
+  /* Example color, adjust as needed */
+}
+
+.fixed {
+  position: fixed;
+}
+
+.flex-grow {
+  flex-grow: 1;
+}
+
+.h-screen {
+  height: 100vh;
+}
+
+.duration-500 {
+  transition-duration: 500ms;
+}
+
+.p-5 {
+  padding: 1.25rem;
+  /* Tailwind CSS class for padding */
+}

@@ -18,34 +18,39 @@ import EditProfile from "./pages/EditProfile";
 import Profile from "./pages/Profile";
 import Resep from "./pages/Resep";
 import InputRecipe from "./pages/InputRecipe";
+import About from "./pages/About";
+import KontakSaran from "./pages/KontakSaran";
+import Privasi from "./pages/Privasi";
+import User from "./pages/User";
+import { useLocation } from "react-router-dom";
+import EditRecipe from "./pages/EditRecipe";
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL_DEV;
+axios.defaults.baseURL = "https://api-msib-6-kitchen-app-04.educalab.id/api";
 axios.defaults.withCredentials = true;
 
 function App() {
   const showNavFoot =
-    window.location.pathname !== "/edit-profile" &&
-    window.location.pathname !== "/recipe/input";
+    useLocation().pathname !== "/profile/edit" &&
+    useLocation().pathname !== "/recipe/input" &&
+    !useLocation().pathname.startsWith("/recipe/edit/");
 
   return (
     <UserContextProvider>
       {showNavFoot && <Navbar />}
-      <Toaster position="top-center" toastOptions={{ duration: 1200 }} />
+      <Toaster position="top-center" toastOptions={{ duration: 1600 }} />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
         <Route path="/search" element={<Search />} />
-        <Route path="/Simpan" element={<Simpan />} />
         <Route path="/recipe/:id" element={<Recipe />} />
-        <Route path="/edit-profile" element={<EditProfile />} />
-        <Route path="/profile" element={<Profile />} />
         <Route path="/recipe/input" element={<InputRecipe />} />
-        <Route path="/resep" element={<Resep />} />
+        <Route path="/recipe/edit/:idRecipe" element={<EditRecipe />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/about/privasi" element={<Privasi />} />
+        <Route path="/about/kontak-saran" element={<KontakSaran />} />
+        <Route path="/user/:username" element={<User />} />
+        <Route path="/profile/edit" element={<EditProfile />} />
+        <Route path="/profile/:username" element={<Profile />} />
         <Route path="*" element={<NotFound />} />
-        <Route path="/about" element={<About/>}/>
-        <Route path="/about/privasi" element={<Privasi/>}/>
-        <Route path="/about/Kontak-saran" element={<KontakSaran/>}/>
       </Routes>
       {showNavFoot && <Footer />}
     </UserContextProvider>

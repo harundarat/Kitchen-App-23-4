@@ -10,22 +10,13 @@ const allowedOrigins = [
 ];
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // middleware
-const corsOptions = {
-    origin: function (origin, callback) {
-        // Jika origin ada dalam daftar yang diizinkan atau permintaan tidak memiliki origin (misalnya permintaan dari Postman)
-        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+app.use(cors({
+    origin: process.env.CORS_ORIGIN_PROD,
     credentials: true
-};
-
-app.use(cors(corsOptions));
+}));
 
 app.use(express.json());
 app.use(cookieParser());

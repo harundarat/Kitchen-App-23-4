@@ -3,7 +3,7 @@ import Card from "../components/common/Card";
 import Accordion from "../components/layouts/Accordion";
 import { Icon } from "@iconify/react";
 import { useLocation, useParams } from "react-router-dom";
-import { Sidebar, Checkbox, Label } from "flowbite-react";
+import { Sidebar, Checkbox, Label, Pagination } from "flowbite-react";
 import { toast } from "react-hot-toast";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -14,21 +14,19 @@ import {
 import InputWbtn from "../components/common/InputWbtn";
 
 export default function Search() {
-  console.log(searchParams());
-
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
   return (
-    <main className="mx-auto my-24 flex w-full min-w-[360px] max-w-[1080px] gap-5 px-5 py-1 lg:mx-auto lg:px-0">
+    <main className="mx-auto box-border flex min-h-svh w-full min-w-[360px] max-w-[1080px] gap-5 px-5 py-24 lg:mx-auto lg:px-0">
       <AdditionalInfoProvider>
         <SidebarFilter />
       </AdditionalInfoProvider>
-      <section className="mt-4 w-full">
+      <section className="mt-96 w-full md:mt-4">
         <header className="mb-6 flex flex-col gap-4">
           <h1 className="line-clamp-1 w-full font-medium text-primary">
-            {`Menampilkan Hasil Pencarian "${searchParams().recipe ? searchParams().recipe : "All"}"`}
+            {`Menampilkan Hasil Pencarian "${searchParams().recipe ? decodeURIComponent(searchParams().recipe) : "All"}"`}
           </h1>
           <div className="flex flex-wrap gap-2">
             {searchParams().category?.length > 0 &&
@@ -37,7 +35,7 @@ export default function Search() {
                   key={index}
                   className="inline-block rounded-full border border-gray-400 bg-bg px-3 py-1 text-xs font-medium text-primary"
                 >
-                  {category}
+                  {decodeURIComponent(category)}
                 </span>
               ))}
             {searchParams().ingredients?.length > 0 &&
@@ -46,7 +44,7 @@ export default function Search() {
                   key={index}
                   className="inline-block rounded-full border border-gray-400 bg-bg px-3 py-1 text-xs font-medium text-primary"
                 >
-                  {ingredients}
+                  {decodeURIComponent(ingredients)}
                 </span>
               ))}
           </div>
@@ -58,17 +56,20 @@ export default function Search() {
 }
 
 function ResultSearch() {
-  const [popular, setPopular] = useState([]);
+  const urlSearchParams = new URLSearchParams(useLocation().search);
+  const [resultSearch, setResultSearch] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // console.log(popular);
+  const urlSearch = urlSearchParams.toString();
+  const urlEndpoint = urlSearch.replace("recipe=", "search=");
 
   useEffect(() => {
-    const fetchPopular = async () => {
+    const fetchSearch = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get("/recipes?limit=12");
-        setPopular(data.recipes);
+        const { data } = await axios.get(`/recipes?${urlEndpoint}&limit=12`);
+        console.log(data);
+        setResultSearch(data);
       } catch (error) {
         console.error(error);
         setError(error);
@@ -77,9 +78,13 @@ function ResultSearch() {
       }
     };
 
-    fetchPopular();
-  }, []);
-  if (loading || error)
+    fetchSearch();
+  }, [useLocation().search]);
+
+  if (loading || error) {
+    if (error) {
+      toast.error("Terjadi kesalahan saat memuat data");
+    }
     return (
       <div className="mx-auto mt-2 grid w-full grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-3">
         <Card isLoad />
@@ -93,21 +98,72 @@ function ResultSearch() {
         <Card isLoad />
       </div>
     );
+  }
 
   return (
-    <div className="mx-auto mt-2 grid w-full grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-3">
-      {popular.map((item, index) => (
-        <Card
-          key={index}
-          id={item._id}
-          tittle={item.title}
-          image={item.image}
-          time={item.total_time}
-          likes={item.likes}
-          creatorName={item.user?.fullName || item.user_id?.fullName}
-          creatorImage={item.user?.image || item.user_id?.image}
-        />
-      ))}
+    <>
+      {resultSearch.recipes?.length === 0 ? (
+        <div className="mb-4 mt-16 flex flex-col items-center justify-center text-gray-400">
+          <Icon icon="hugeicons:album-not-found-01" width={50} />
+          <h1 className="text-lg font-medium">Resep tidak ditemukan</h1>
+          <p className="text-sm">Coba gunakan kata kunci lain</p>
+        </div>
+      ) : (
+        <>
+          <div className="mx-auto mt-2 grid w-full grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3">
+            {resultSearch.recipes?.map((item, index) => (
+              <Card
+                key={index}
+                id={item._id}
+                tittle={item.title}
+                image={item.image}
+                time={item.total_time}
+                likes={item.likes}
+                creatorName={item.user?.fullName || item.user_id?.fullName}
+                creatorImage={item.user?.image || item.user_id?.image}
+              />
+            ))}
+          </div>
+          <SearchPagination totalPages={resultSearch.totalPages} />
+        </>
+      )}
+    </>
+  );
+}
+
+function SearchPagination({ totalPages }) {
+  const navigate = useNavigate();
+  const urlSearchParams = new URLSearchParams(useLocation().search);
+  const page = parseInt(urlSearchParams.get("page")) || 1;
+  const [currentPage, setCurrentPage] = useState(page);
+  const onPageChange = (page) => {
+    setCurrentPage(page);
+    urlSearchParams.set("page", page);
+    navigate(`/search?${urlSearchParams.toString()}`);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  return (
+    <div className="mt-10 flex flex-col items-center justify-center gap-4 overflow-x-auto">
+      <Pagination
+        layout="navigation"
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+        showIcons
+      />
+      <div className="flex items-center gap-4">
+        <p className="text-sm text-gray-500">
+          Halaman saat ini <strong>{currentPage}</strong>
+        </p>
+        <p className="text-sm text-gray-500">-</p>
+        <p className="text-sm text-gray-400">
+          Total Halaman <strong>{totalPages}</strong>
+        </p>
+      </div>
     </div>
   );
 }
@@ -120,13 +176,13 @@ function SidebarFilter() {
     category: params.category,
     ingredients: params.ingredients,
   });
-  console.log(filter);
   const [checkedCategories, setCheckedCategories] = useState(
     additionalInfo?.kategori?.reduce((acc, category) => {
       acc[category.title] = false;
       return acc;
     }, {}),
   );
+
   useEffect(() => {
     filter.category.map((category) => {
       setCheckedCategories((prevCheckedCategories) => ({
@@ -170,26 +226,45 @@ function SidebarFilter() {
       category: getCheckedCategories(),
     }));
     // console.log(filter);
-    const query = {
+    const encode = {
       recipe: encodeURIComponent(params.recipe),
       category: encodeURIComponent(getCheckedCategories().join(",")),
       ingredients: encodeURIComponent(filter.ingredients.join(",")),
       page: 1,
     };
-    navigate(
-      `/search?recipe=${query.recipe}&category=${query.category}&ingredients=${query.ingredients}&page=${query.page}`,
-    );
+    const query = {
+      recipe: params.recipe ? `recipe=${encode.recipe}` : "",
+      category:
+        getCheckedCategories().length > 0 ? `category=${encode.category}` : "",
+      ingredients:
+        filter.ingredients.length > 0
+          ? `ingredients=${encode.ingredients}`
+          : "",
+      page: 1,
+    };
+    // console.log(query.ingredients);
+    const querySearch =
+      (query.recipe ? `${query.recipe}&` : "") +
+      (query.category ? `${query.category}&` : "") +
+      (query.ingredients ? `${query.ingredients}&` : "");
+
+    console.log(querySearch);
+    navigate(`/search?${querySearch}page=${query.page}`);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   return (
     <>
       <Sidebar
         aria-label="sidebar-filter"
-        className="mt-4 max-w-[255px] rounded-lg border border-gray-300 bg-gray-100 shadow"
+        className="absolute z-40 mt-4 h-fit w-full max-w-[255px] rounded-lg border border-gray-300 bg-gray-100 shadow md:static"
       >
         <Sidebar.Items>
           {/* Filter Header */}
-          <Sidebar.ItemGroup className="m-0 p-0">
+          <Sidebar.ItemGroup className="m-0 border-none p-0">
             <Sidebar.Item className="justify-start">
               <div className="flex items-center gap-2">
                 <Icon className="text-primary" icon="uil:filter" width={22} />
@@ -199,7 +274,7 @@ function SidebarFilter() {
           </Sidebar.ItemGroup>
           <hr className="my-2 border border-gray-300" />
           {/* Filter Berdasarkan Kategori */}
-          <Sidebar.ItemGroup className="m-0 p-0">
+          <Sidebar.ItemGroup className="m-0 border-none p-0">
             <Sidebar.Collapse
               className="gap-4 font-medium hover:bg-gray-200"
               label="Berdasarkan Kategori"
@@ -223,7 +298,7 @@ function SidebarFilter() {
           </Sidebar.ItemGroup>
           <hr className="my-1 border border-gray-200" />
           {/* Filter Berdasarkan Bahan */}
-          <Sidebar.ItemGroup className="m-0 p-0">
+          <Sidebar.ItemGroup className="m-0 border-none p-0">
             <Sidebar.Item className="justify-start">
               <div className="flex flex-col gap-4">
                 <h1 className="font-medium">Berdasarkan Bahan</h1>
@@ -249,7 +324,7 @@ function SidebarFilter() {
           </Sidebar.ItemGroup>
           <hr className="my-2 border border-gray-200" />
           {/* Button Terapkan */}
-          <Sidebar.ItemGroup className="m-0 p-0">
+          <Sidebar.ItemGroup className="m-0 border-none p-0">
             <Sidebar.Item>
               <button
                 className="rounded-full border border-gray-300 bg-primary px-4 py-2 text-bg shadow-sm hover:bg-opacity-90 active:scale-95"
@@ -312,7 +387,7 @@ function Autocomplete({ data, onDone }) {
         required
       />
       {showSuggestions && (
-        <ul className="absolute z-20 mt-2 w-full list-none overflow-hidden rounded-lg bg-bg shadow-lg">
+        <ul className="absolute z-50 mt-2 w-full list-none overflow-hidden rounded-lg bg-bg shadow-lg">
           {suggestions.map((suggestion, index) => (
             <li
               key={index}

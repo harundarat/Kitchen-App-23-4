@@ -13,6 +13,7 @@ function RoundedButton(props) {
     <>
       <button
         onClick={props.onClick}
+        type={props.type}
         className={`rounded-full border-[1px] border-primary bg-primary px-4 py-1 font-medium text-bg outline-primary transition-all duration-75 hover:bg-opacity-90 hover:outline hover:outline-[2px] active:scale-95 ${props.className}`}
       >
         {props.name}

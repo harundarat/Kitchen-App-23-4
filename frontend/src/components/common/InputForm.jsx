@@ -29,7 +29,7 @@ export default function InputForm({
           value={value}
           onChange={onChange}
           id={name}
-          className={`w-full focus:outline-none ${disabled ? "cursor-not-allowed" : ""}`}
+          className={`w-full border-none p-0 focus:outline-none focus:ring-0 ${disabled ? "cursor-not-allowed" : ""}`}
           placeholder={placeholder}
           disabled={disabled}
           {...rest}

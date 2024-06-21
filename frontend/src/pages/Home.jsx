@@ -9,7 +9,8 @@ import {
   AdditionalInfoContext,
   AdditionalInfoProvider,
 } from "../context/additionalInfoContext.jsx";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -119,10 +120,17 @@ function PopularSection() {
 }
 
 function CategorySection() {
+  const navigate = useNavigate();
+  const urlSearchParams = new URLSearchParams(useLocation().search);
   const ref = useRef();
   const { events } = useDraggable(ref);
   const { additionalInfo, loading } = useContext(AdditionalInfoContext);
   const kategori = additionalInfo?.kategori;
+
+  const handleClick = (title) => {
+    urlSearchParams.set("category", title);
+    navigate(`/search?${urlSearchParams.toString()}`);
+  };
 
   if (loading) {
     return (
@@ -156,7 +164,12 @@ function CategorySection() {
     >
       <div className="flex w-full gap-3 whitespace-nowrap">
         {kategori.map((item, index) => (
-          <CategoryCard key={index} title={item.title} image={item.image} />
+          <CategoryCard
+            onClick={() => handleClick(item.title)}
+            key={index}
+            title={item.title}
+            image={item.image}
+          />
         ))}
       </div>
     </div>
@@ -167,13 +180,13 @@ function ForYouSection() {
   const [forYou, setForYou] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // console.log(forYou);
 
   useEffect(() => {
     const fetchForYou = async () => {
       try {
         setLoading(true);
         const { data } = await axios.get("/for-you");
+        console.log("🚀 ~ fetchForYou ~ data:", data);
         setForYou(data.recipes);
       } catch (error) {
         console.error(error);
@@ -187,6 +200,7 @@ function ForYouSection() {
   }, []);
 
   if (error || loading) {
+    if (error) toast.error("Gagal mengambil data 'for you'");
     return (
       <div className="mx-auto mt-2 grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4">
         {/* Taruh kodingan section 'untuk kamu' disini */}

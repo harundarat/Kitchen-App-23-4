@@ -1,184 +1,255 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import CardProfile from '../components/common/CardProfile';
+import React, { useContext, useState, useEffect } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { UserContext } from "../context/userContext";
+import axios from "axios";
+import { Icon } from "@iconify/react";
+import BlankProfile from "../assets/blank_profile.webp";
+import toast from "react-hot-toast";
+import Card from "../components/common/Card";
 
-const Profile = () => {
-   const  data_kartu={
-        "pertama":[{
-            "nama":"Martin Joseph",
-            "image" : "/profile-cards/image 1.png",
-            "user" : "/profile-cards/Ellipse 1.png",
-            "time": "30m",
-            "likes":"10k",
-            "title":"Martabak Manis Cokelat Kacang Teflon",
-        }],
-        "kedua":[{
-            "nama":"Bella Haddad",
-            "image" : "/profile-cards/image 2.png",
-            "user" : "/profile-cards/Ellipse 2.png",
-            "time": "1,5j",
-            "likes":"2.3k",
-            "title":"Resep Opor Ayam Yang Mantap Untuk Lebaran",
-        }],
-        "ketiga":[{
-            "nama":"Ruth Stewart",
-            "image" : "/profile-cards/image 3.png",
-            "user" : "/profile-cards/Ellipse 3.png",
-            "time": "30 m",
-            "likes":"2.3k",
-            "title":"Resep Sop Buah Mutiara, Minuman Dingin yang Cocok untuk Musim Panas",
-        }],
-        "empat":[{
-            "nama":"Marelyn Johanson",
-            "image" : "/profile-cards/image 4.png",
-            "user" : "/profile-cards/Ellipse 4.png",
-            "time": "30 m",
-            "likes":"2.3k",
-            "title":"Resep Babi Kurma By LastHope Kitchen, Bikin Masuk Penjara",
-        }],
-        "kelima":[{
-            "nama":"Martin Joseph",
-            "image" : "/profile-cards/image 1.png",
-            "user" : "/profile-cards/Ellipse 1.png",
-            "time": "30m",
-            "likes":"10k",
-            "title":"Martabak Manis Cokelat Kacang Teflon",
-        }],
-        "enam":[{
-            "nama":"Bella Haddad",
-            "image" : "/profile-cards/image 2.png",
-            "user" : "/profile-cards/Ellipse 2.png",
-            "time": "1,5j",
-            "likes":"2.3k",
-            "title":"Resep Opor Ayam Yang Mantap Untuk Lebaran",
-        }],
-        "tujuh":[{
-            "nama":"Ruth Stewart",
-            "image" : "/profile-cards/image 3.png",
-            "user" : "/profile-cards/Ellipse 3.png",
-            "time": "30 m",
-            "likes":"2.3k",
-            "title":"Resep Sop Buah Mutiara, Minuman Dingin yang Cocok untuk Musim Panas",
-        }],
-        "delapan":[{
-            "nama":"Marelyn Johanson",
-            "image" : "/profile-cards/image 4.png",
-            "user" : "/profile-cards/Ellipse 4.png",
-            "time": "30 m",
-            "likes":"2.3k",
-            "title":"Resep Babi Kurma By LastHope Kitchen, Bikin Masuk Penjara",
-        }],
-        "9":[{
-            "nama":"Martin Joseph",
-            "image" : "/profile-cards/image 1.png",
-            "user" : "/profile-cards/Ellipse 1.png",
-            "time": "30m",
-            "likes":"10k",
-            "title":"Martabak Manis Cokelat Kacang Teflon",
-        }],
-        "10":[{
-            "nama":"Bella Haddad",
-            "image" : "/profile-cards/image 2.png",
-            "user" : "/profile-cards/Ellipse 2.png",
-            "time": "1,5j",
-            "likes":"2.3k",
-            "title":"Resep Opor Ayam Yang Mantap Untuk Lebaran",
-        }],
-        "11":[{
-            "nama":"Ruth Stewart",
-            "image" : "/profile-cards/image 3.png",
-            "user" : "/profile-cards/Ellipse 3.png",
-            "time": "30 m",
-            "likes":"2.3k",
-            "title":"Resep Sop Buah Mutiara, Minuman Dingin yang Cocok untuk Musim Panas",
-        }],
-        "12":[{
-            "nama":"Marelyn Johanson",
-            "image" : "/profile-cards/image 4.png",
-            "user" : "/profile-cards/Ellipse 4.png",
-            "time": "30 m",
-            "likes":"2.3k",
-            "title":"Resep Babi Kurma By LastHope Kitchen, Bikin Masuk Penjara",
-        }],
+export default function Profile() {
+  const urlSearchParams = new URLSearchParams(useLocation().search);
+  const navigate = useNavigate();
+  const { isLogged } = useContext(UserContext);
+  const { username } = useParams();
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState({});
+  const [activeTab, setActiveTab] = useState("recipes");
+
+  useEffect(() => {
+    const tab = urlSearchParams.get("tab");
+    if (!tab) {
+      setActiveTab("recipes");
+    }
+    if (tab === "saved") {
+      setActiveTab("saved");
+    }
+    if (tab !== "saved") {
+      urlSearchParams.set("tab", "recipes");
+      setActiveTab("recipes");
+    }
+  }, [useLocation().search]);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`/users/${username}`);
+        const data = response.data;
+        setUser(data);
+      } catch (error) {
+        console.log("🚀 ~ fetchUser ~ error:", error);
+        toast.error("Error fetching user data.");
+        navigate("/user");
+      }
     };
+    const authorize = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`/auth/authorized/${username}`);
+        if (response.status === 200) {
+          fetchUser();
+        }
+      } catch (error) {
+        console.log("🚀 ~ authorize ~ error:", error);
+        navigate("/profile");
+      } finally {
+        setLoading(false);
+      }
+    };
+    authorize();
+  }, [isLogged]);
+
+  const tabHandler = (tab) => {
+    urlSearchParams.set("tab", tab);
+    navigate(`/profile/${username}?${urlSearchParams.toString()}`);
+    setActiveTab(tab);
+  };
 
   return (
-    <div className='xl:px-36'>
- 
-        <div className='mt-28 md:mt-26 lg:mt-26 sm:px-4'>
-              {/* PROFILE IMG */}
-              <div className="flex justify-between px-4 md:px-1">
-                <div className='flex gap-5'>
-                    <img 
-                        src="/profile/user-profile.png" 
-                        alt="profile picture"
-                        className='w-[55px] h-[55px] sm:w-[121px] sm:h-[121px] rounded-full' />
-                
-                    <div className="flex lg:justify-between xl:justify-between  ">
-                        <div className="flex flex-col">
-                                    {/* NAMA USER */}
-                                    <p className='text-[10px] sm:text-[32px] font-semibold'>
-                                    Joseph Indera Rabbanni
-                                    </p>
-                                    {/* BIO USER */}
-                                    <p className='text-[6px] sm:text-[16px] w-[262px] xl:w-[768px] md:w-[600px]'>Halo, saya Joseph Indera Rabbani, seorang pecinta kuliner dan penulis resep yang berdedikasi. Dengan lebih dari 1 Abad pengalaman di dapur, saya telah menjelajahi berbagai macam masakan dari seluruh dunia dan menemukan kegembiraan dalam berbagi resep yang lezat dan mudah diikuti.</p>
-                                    {/* SETTING BTN */}
-                                    <div className='text-right'>
-                                        <Link
-                                            to={""} 
-                                            className='w-[35px] h-[10px] sm:w-[99px] sm:h-[33px] text-[6px] sm:text-[16px] border-2 border-black rounded-[27px] sm:px-6 sm:py-2 px-4 py-1 sm:hidden font-medium'>
-                                        Settings
-                                        </Link>
-                                    </div>
-                        </div>
-                    </div>
-                </div>
-                        <div className=''>
-                                <Link
-                                    to={""} 
-                                    className='w-[35px] h-[10px] sm:w-[99px] sm:h-[33px] text-[6px] sm:text-[16px] border-2 border-black rounded-[27px] sm:px-6 sm:py-2 px-4 py-1 hidden sm:flex items-center'>
-                                   Settings
-                                </Link>
-                            </div>
-                </div>
+    <>
+      {loading && (
+        <div className="fixed left-1/2 top-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center bg-primary bg-opacity-50 backdrop-blur">
+          <div className="flex h-40 w-40 flex-col items-center justify-center gap-2 rounded bg-bg font-medium">
+            <Icon icon="svg-spinners:180-ring-with-bg" width={40} />
+            <h1>Loading...</h1>
+          </div>
         </div>
-        <div className="p-5">
-            <hr className=' md:mt-12 mb-4 md:mb-8 ' />
+      )}
+      <main className="mb-24 mt-32 min-h-svh px-5 lg:px-0">
+        <section className="mx-auto flex w-full max-w-[1080px] flex-col gap-4 sm:flex-row">
+          <img
+            className="aspect-square h-fit w-24 rounded-full"
+            src={user.user?.image || BlankProfile}
+            alt="profile picture"
+          />
+          <div className="flex flex-col justify-center gap-2">
+            <h1 className="text-xl font-bold">
+              {user.user?.fullName || "User Full Name"}
+            </h1>
+            {user.user?.website && (
+              <a
+                className="font-medium italic text-accent-1 underline"
+                href={user.user?.website}
+                target="_blank"
+              >
+                {user.user?.website}
+              </a>
+            )}
+            {user.user?.bio && <p>{user.user?.bio}</p>}
+          </div>
+          <button
+            onClick={() => navigate("/profile/edit")}
+            className="mt-2 flex h-fit w-fit items-center gap-2 rounded-full border border-primary px-4 py-2 transition-all hover:bg-primary hover:text-bg active:scale-95 sm:ml-auto"
+          >
+            <Icon icon="uil:setting" />
+            Pengaturan
+          </button>
+        </section>
+        <hr className="mx-auto mt-6 w-full max-w-[1080px]" />
+        <div className="mx-auto mt-6 flex w-full max-w-[1080px] justify-end">
+          <button
+            onClick={() => navigate("/recipe/input")}
+            className="bo flex items-center gap-2 rounded-full border bg-primary px-4 py-2 text-bg transition-all hover:border-primary hover:bg-bg hover:text-primary active:scale-95"
+          >
+            Tambah Resep Baru
+            <Icon icon="fluent:add-12-filled" />
+          </button>
         </div>
-
-        <div className='mx-auto max-w-7xl px-4'>
-            <div className='flex justify-between items-center mb-4 md:mb-8'>
-                {/* TITLE */}
-                <p className="font-semibold text-xs md:text-base">
-                    Resep dari Joseph
-                </p>
-                
-                {/* ADD RECIPE BUTTON */}
-                <button className='bg-black rounded-full text-xs md:text-base text-white px-3 md:px-6 py-1 md:py-2'>
-                    Tambah Resep
-                </button>
-            </div>
-
-            {/* RECIPE CARDS */}
-            <div className='grid grid-cols-2 md:grid-cols-4 gap-5 mb-16'>
-                {Object.keys(data_kartu).map((key, i)=>(
-                    data_kartu[key].map((item, j) => (
-                        <div key={i + '-' + j}>
-                            <CardProfile
-                                image={item.image}
-                                time={item.time}
-                                likes={item.likes}
-                                tittle={item.title}
-                                creatorName={item.nama}
-                                creatorImage={item.user}
-                            />
-                        </div>
-                    ))
-                ))}
-            </div>
+        <div className="mx-auto flex w-full max-w-[1080px] items-center justify-center gap-10 pt-4">
+          <button
+            onClick={() => tabHandler("recipes")}
+            className={`w-44 border-b-2 py-3 ${activeTab === "recipes" ? "border-accent-1" : ""}`}
+          >
+            Resep Kamu
+          </button>
+          <button
+            onClick={() => tabHandler("saved")}
+            className={`w-44 border-b-2 py-3 ${activeTab === "saved" ? "border-accent-1" : ""}`}
+          >
+            Resep Disimpan
+          </button>
         </div>
-    </div>
-  )
+        <section className="mx-auto mt-4 flex w-full max-w-[1080px]">
+          {activeTab === "recipes" && (
+            <RecipesTab loading={loading} user={user} />
+          )}
+          {activeTab === "saved" && <SaveTab />}
+          {/* {activeTab === "saved" && <RecipesTab />} */}
+        </section>
+      </main>
+    </>
+  );
 }
 
-export default Profile;
+function RecipesTab({ user, loading }) {
+  console.log("🚀 ~ RecipesTab ~ user:", user);
+  if (loading) {
+    return (
+      <div className="mx-auto mt-2 grid w-full grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4">
+        {/* Taruh kodingan section 'untuk kamu' disini */}
+        <Card isLoad />
+        <Card isLoad />
+        <Card isLoad />
+        <Card isLoad />
+        <Card isLoad />
+        <Card isLoad />
+        <Card isLoad />
+        <Card isLoad />
+      </div>
+    );
+  }
+  if (user.recipe?.length === 0) {
+    return (
+      <div className="mb-4 mt-16 flex w-full flex-col items-center justify-center gap-4 text-gray-400">
+        <Icon icon="hugeicons:album-not-found-01" width={50} />
+        <h1>Belum ada resep yang dibuat.</h1>
+      </div>
+    );
+  }
+  return (
+    <div className="mx-auto mt-2 grid w-full grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4">
+      {user.recipe?.map((item, index) => (
+        <Card
+          key={index}
+          id={item._id}
+          tittle={item.title}
+          image={item.image}
+          time={item.total_time}
+          likes={item.likes}
+          creatorName={user.user?.fullName || "User Full Name"}
+          creatorImage={user.user?.image || ""}
+          editor
+        />
+      ))}
+    </div>
+  );
+}
+
+function SaveTab() {
+  const { username } = useParams();
+  const [savedRecipes, setSavedRecipes] = useState(null);
+  // console.log("🚀 ~ SaveTab ~ savedRecipes:", savedRecipes);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchSavedRecipes = async () => {
+      try {
+        setLoading(true);
+        const { data } = await axios.get(`/users/${username}/saved-recipes`);
+        setSavedRecipes(data.recipes);
+      } catch (error) {
+        console.error(error);
+        setError(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSavedRecipes();
+  }, [username]);
+
+  if (error || loading) {
+    if (error) toast.error("Gagal mengambil data 'for you'");
+    return (
+      <div className="mx-auto mt-2 grid w-full grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4">
+        {/* Taruh kodingan section 'untuk kamu' disini */}
+        <Card isLoad />
+        <Card isLoad />
+        <Card isLoad />
+        <Card isLoad />
+        <Card isLoad />
+        <Card isLoad />
+        <Card isLoad />
+        <Card isLoad />
+      </div>
+    );
+  }
+
+  if (savedRecipes?.length === 0) {
+    return (
+      <div className="mb-4 mt-16 flex w-full flex-col items-center justify-center gap-4 text-gray-400">
+        <Icon icon="hugeicons:album-not-found-01" width={50} />
+        <h1>Belum ada resep yang disimpan.</h1>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto mt-2 grid w-full grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4">
+      {savedRecipes?.map((item, index) => (
+        <Card
+          key={index}
+          id={item._id}
+          tittle={item.title}
+          image={item.image}
+          time={item.total_time}
+          likes={item.likes}
+          creatorName={item.user_id?.fullName || "User Full Name"}
+          creatorImage={item.user_id?.image || ""}
+        />
+      ))}
+    </div>
+  );
+}

@@ -1,5 +1,5 @@
-import React, { useRef, useState, useContext } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import React, { useRef, useState, useContext, useEffect } from "react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Link } from "react-scroll";
 import Logo from "/kitchen-craft-logo.svg";
 import RoundedButton from "../common/RoundedButton";
@@ -8,16 +8,18 @@ import InputWbtn from "../common/InputWbtn";
 import toast from "react-hot-toast";
 import Hamburger from "hamburger-react";
 import { UserContext } from "../../context/userContext";
+import BlankProfile from "../../assets/blank_profile.webp";
 import {
   ModalProfileContext,
   ModalProfileProvider,
 } from "../features/ModalProfile";
 import Login from "../../pages/Login";
 import Register from "../../pages/Register";
+import axios from "axios";
 import { Modal, Button, Checkbox, Label, TextInput } from "flowbite-react";
 
-
 export default function Navbar() {
+  const urlSearchParams = new URLSearchParams(useLocation().search);
   const [toggleHamburger, setToggleHamburger] = useState(false);
   const { isLogged } = useContext(UserContext);
   const [searchFocus, setSearchFocus] = useState(false);
@@ -27,19 +29,22 @@ export default function Navbar() {
   const handleSearch = (input) => {
     if (!input || input === "") {
       toast.error("Masukkan kata kunci pencarian");
+      return;
     }
-    navigate(`/search?recipe=${encodeURIComponent(input)}`);
+    urlSearchParams.set("recipe", input);
+    urlSearchParams.set("page", 1);
+    navigate(`/search?${urlSearchParams.toString()}`);
     setSearchFocus(!searchFocus);
     console.log(input);
   };
 
-  const [openLogin, setOpenLogin] = useState (false);
-  const [openRegister, setOpenRegister] = useState (false);
+  const [openLogin, setOpenLogin] = useState(false);
+  const [openRegister, setOpenRegister] = useState(false);
 
   const hoverNav = "hover:text-accent-2 transition-all";
 
   return (
-    <header className="fixed top-0 z-20 flex h-24 w-full items-center bg-bg shadow lg:justify-center lg:px-0">
+    <header className="fixed top-0 z-50 flex h-24 w-full items-center bg-bg shadow lg:justify-center lg:px-0">
       <MenuBar toggled={toggleHamburger} toggle={setToggleHamburger} />
       <div className="flex w-full min-w-[360px] items-center px-5 lg:mx-auto lg:max-w-[1080px] lg:justify-center lg:px-0">
         {/* Hamburger */}
@@ -178,29 +183,51 @@ export default function Navbar() {
                   className="h-10"
                   name="Masuk"
                   btnStroke={true}
-                    onClick={() => setOpenLogin(true)}
+                  onClick={() => setOpenLogin(true)}
                 />
                 <RoundedButton
                   className="h-10"
                   name="Daftar"
-                    onClick={() => setOpenRegister(true)}
+                  onClick={() => setOpenRegister(true)}
                 />
 
-                  <Modal show={openLogin} size="md" popup onClose={() => setOpenLogin(false)} className="bg-black shadow bg-opacity-65">
-                    <Modal.Header />
-                    <Modal.Body>
-                      <Login />
-                    </Modal.Body>
-                  </Modal>
+                <Modal
+                  show={openLogin}
+                  size="md"
+                  popup
+                  onClose={() => setOpenLogin(false)}
+                  className="bg-black bg-opacity-65 shadow"
+                >
+                  <Modal.Header />
+                  <Modal.Body>
+                    <Login
+                      toRegister={(val) => {
+                        setOpenRegister(val);
+                        setOpenLogin(!openLogin);
+                      }}
+                    />
+                  </Modal.Body>
+                </Modal>
 
-                  <Modal show={openRegister} size="md" popup onClose={() => setOpenRegister(false)} className="bg-black shadow bg-opacity-65">
-                    <Modal.Header />
-                    <Modal.Body>
-                      <Register />
-                    </Modal.Body>
-                  </Modal>
-
-
+                <Modal
+                  show={openRegister}
+                  size="md"
+                  popup
+                  onClose={() => setOpenRegister(false)}
+                  className="fixed bg-black bg-opacity-65 shadow"
+                >
+                  <Modal.Header>
+                    <h1 className="m-4 font-semibold">Buat Akun Baru.</h1>
+                  </Modal.Header>
+                  <Modal.Body className="max-h-[80vh] overflow-y-scroll">
+                    <Register
+                      toLogin={(val) => {
+                        setOpenLogin(val);
+                        setOpenRegister(!openRegister);
+                      }}
+                    />
+                  </Modal.Body>
+                </Modal>
               </div>
             </div>
           </>
@@ -210,38 +237,62 @@ export default function Navbar() {
   );
 }
 
-
-
 // Modal Login & Register
 function AuthButton() {
   const [openLogin, setOpenLogin] = useState(false);
   const [openRegister, setOpenRegister] = useState(false);
 
   return (
-    <div >
-
+    <div>
       <div className="ml-3 hidden gap-2 sm:ml-6 lg:flex">
-        <RoundedButton name="Masuk" btnStroke={true} onClick={() => setOpenLogin(true)} />
+        <RoundedButton
+          name="Masuk"
+          btnStroke={true}
+          onClick={() => setOpenLogin(true)}
+        />
         <RoundedButton
           className="h-10"
           name="Daftar"
           onClick={() => setOpenRegister(true)}
         />
       </div>
-      <Modal show={openLogin} size="md" popup onClose={() => setOpenLogin(false)} className="bg-black shadow bg-opacity-65">
+      <Modal
+        show={openLogin}
+        size="md"
+        popup
+        onClose={() => setOpenLogin(false)}
+        className="bg-black bg-opacity-65 shadow"
+      >
         <Modal.Header />
         <Modal.Body>
-        <Login/>
+          <Login
+            toRegister={(val) => {
+              setOpenRegister(val);
+              setOpenLogin(!openLogin);
+            }}
+          />
         </Modal.Body>
       </Modal>
 
-      <Modal show={openRegister} size="md" popup onClose={() => setOpenRegister(false)} className="bg-black  bg-opacity-65">
-        <Modal.Header />
-        <Modal.Body>
-        <Register/>
+      <Modal
+        show={openRegister}
+        size="md"
+        popup
+        onClose={() => setOpenRegister(false)}
+        className="fixed bg-black bg-opacity-65 shadow"
+      >
+        <Modal.Header>
+          <h1 className="m-4 font-semibold">Buat Akun Baru.</h1>
+        </Modal.Header>
+        <Modal.Body className="max-h-[80vh] overflow-y-scroll">
+          <Register
+            toLogin={(val) => {
+              setOpenLogin(val);
+              setOpenRegister(!openRegister);
+            }}
+          />
         </Modal.Body>
       </Modal>
-
     </div>
   );
 }
@@ -249,11 +300,24 @@ function AuthButton() {
 
 function Profile() {
   const { toggle, setToggle } = useContext(ModalProfileContext);
+  const { user, isLogged } = useContext(UserContext);
+  const [profile, setProfile] = useState({});
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const response = await axios.get(`/users/${user.username}`);
+        setProfile(response.data.user);
+      } catch (error) {
+        console.error(error.response?.data);
+      }
+    };
+    getUser();
+  }, [isLogged, user]);
 
   return (
     <div className="flex w-fit min-w-fit cursor-pointer items-center gap-1 lg:ml-3">
       <img
-        src="https://pics.craiyon.com/2023-07-15/dc2ec5a571974417a5551420a4fb0587.webp"
+        src={profile.image ? profile.image : BlankProfile}
         alt="Profile"
         className="aspect-square w-10 rounded-full bg-slate-300 object-cover sm:w-11"
         onClick={() => setToggle(!toggle)}
@@ -274,6 +338,9 @@ function Profile() {
 }
 
 function MenuBar(props) {
+  const navigate = useNavigate();
+  const showNav = window.location.pathname === "/";
+
   return (
     <aside
       className={`fixed left-0 top-0 h-svh w-0 border bg-bg shadow transition-all duration-200 ${props.toggled ? "z-50 w-[70%]" : "invisible"}`}
@@ -294,54 +361,76 @@ function MenuBar(props) {
         />
       </div>
       <hr />
-      <nav
-        className={`mx-7 mt-4 flex flex-col gap-6 ${!props.toggled ? "hidden" : ""}`}
-      >
-        <Link
-          activeClass="text-accent-2"
-          to="banner"
-          spy={true}
-          smooth={true}
-          offset={-150}
-          className="cursor-pointer"
-          onClick={() => props.toggle(false)}
+      {showNav && (
+        <nav
+          className={`mx-7 mt-4 flex flex-col gap-6 ${!props.toggled ? "hidden" : ""}`}
         >
-          Beranda
-        </Link>
-        <Link
-          activeClass="text-accent-2"
-          to="popular"
-          spy={true}
-          smooth={true}
-          offset={-110}
-          className="cursor-pointer"
-          onClick={() => props.toggle(false)}
+          <Link
+            activeClass="text-accent-2"
+            to="banner"
+            spy={true}
+            smooth={true}
+            offset={-150}
+            className="cursor-pointer"
+            onClick={() => props.toggle(false)}
+          >
+            Beranda
+          </Link>
+          <Link
+            activeClass="text-accent-2"
+            to="popular"
+            spy={true}
+            smooth={true}
+            offset={-110}
+            className="cursor-pointer"
+            onClick={() => props.toggle(false)}
+          >
+            Terpopuler
+          </Link>
+          <Link
+            activeClass="text-accent-2"
+            to="category"
+            spy={true}
+            smooth={true}
+            offset={-110}
+            className="cursor-pointer"
+            onClick={() => props.toggle(false)}
+          >
+            Kategori
+          </Link>
+          <Link
+            activeClass="text-accent-2"
+            to="ingredients"
+            spy={true}
+            smooth={true}
+            offset={-120}
+            className="cursor-pointer"
+            onClick={() => props.toggle(false)}
+          >
+            Bahan Makanan
+          </Link>
+        </nav>
+      )}
+      {!showNav && (
+        <nav
+          className={`mx-7 mt-4 flex flex-col gap-6 ${!props.toggled ? "hidden" : ""}`}
         >
-          Terpopuler
-        </Link>
-        <Link
-          activeClass="text-accent-2"
-          to="category"
-          spy={true}
-          smooth={true}
-          offset={-110}
-          className="cursor-pointer"
-          onClick={() => props.toggle(false)}
-        >
-          Kategori
-        </Link>
-        <Link
-          activeClass="text-accent-2"
-          to="ingredients"
-          spy={true}
-          smooth={true}
-          offset={-120}
-          className="cursor-pointer"
-          onClick={() => props.toggle(false)}
-        >
-          Bahan Makanan
-        </Link>
-      </nav>
+          <Link
+            activeClass="text-accent-2"
+            to="banner"
+            spy={true}
+            smooth={true}
+            offset={-150}
+            className="cursor-pointer"
+            onClick={() => {
+              props.toggle(false);
+              navigate("/");
+            }}
+          >
+            Beranda
+          </Link>
+        </nav>
+      )}
       <div
         className={`absolute -right-full top-0 h-svh w-full bg-primary bg-opacity-5 backdrop-blur-[2px] ${!props.toggled ? "hidden" : ""}`}
         onClick={() => props.toggle(false)}

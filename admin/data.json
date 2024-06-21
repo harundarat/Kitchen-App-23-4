@@ -1,0 +1,373 @@
+{
+  "users": [
+    {
+      "id": "3",
+      "name": "Alice Johnson",
+      "email": "alice.johnson@example.com",
+      "number": "345-678-9012",
+      "status": "active"
+    }
+  ],
+  "recipes": [
+    {
+      "id": "1",
+      "title": "Nasi Goreng",
+      "image": "https://example.com/nasi_goreng.jpg",
+      "description": "Nasi goreng dengan campuran sayuran dan daging.",
+      "total_time": "30m",
+      "ingredients": [
+        "2 porsi nasi putih",
+        "2 butir telur",
+        "100 gr ayam fillet, potong dadu",
+        "50 gr wortel, potong dadu",
+        "50 gr kacang polong",
+        "2 siung bawang putih, cincang halus",
+        "2 sdm kecap manis",
+        "1 sdm saus tiram",
+        "Garam dan merica secukupnya",
+        "2 sdm minyak goreng"
+      ],
+      "video": "https://youtu.be/nasi_goreng",
+      "stepDescription": [
+        "1. Panaskan minyak di wajan, tumis bawang putih hingga harum.",
+        "2. Masukkan ayam, masak hingga berubah warna.",
+        "3. Tambahkan wortel dan kacang polong, aduk rata.",
+        "4. Masukkan nasi putih, kecap manis, saus tiram, garam, dan merica.",
+        "5. Aduk rata hingga semua bahan tercampur sempurna.",
+        "6. Geser nasi ke tepi wajan, tuang telur di tengah, orak-arik hingga matang.",
+        "7. Campur telur dengan nasi, aduk rata dan angkat.",
+        "8. Sajikan nasi goreng panas."
+      ],
+      "stepImage": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "category": "Aneka Nasi"
+    },
+    {
+      "id": "2",
+      "title": "Nasi Uduk",
+      "image": "https://tse1.mm.bing.net/th?id=OIP.WtekrdD1MrrhCpeVQ2iw-AHaFE&pid=Api&P=0&h=220",
+      "description": "Nasi uduk dengan aroma santan dan rempah.",
+      "total_time": "45m",
+      "ingredients": [
+        "2 cangkir beras",
+        "200 ml santan",
+        "2 batang serai, memarkan",
+        "2 lembar daun salam",
+        "2 lembar daun pandan",
+        "1 sdt garam",
+        "Air secukupnya"
+      ],
+      "video": "https://youtu.be/R6xsviDF6UU",
+      "stepDescription": [
+        "1. Cuci beras hingga bersih, tiriskan.",
+        "2. Campur beras dengan santan, serai, daun salam, daun pandan, dan garam.",
+        "3. Masak beras dalam rice cooker hingga matang.",
+        "4. Aduk nasi dengan garpu agar tidak menggumpal.",
+        "5. Sajikan nasi uduk dengan lauk-pauk sesuai selera."
+      ],
+      "stepImage": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "category": "Aneka Nasi"
+    },
+    {
+      "id": "3",
+      "title": "Nasi Kuning",
+      "image": "https://tse4.mm.bing.net/th?id=OIP._7EsIKD1w29tyJuF3Pu6hAHaFP&pid=Api&P=0&h=220",
+      "description": "Nasi kuning yang lezat dan gurih.",
+      "total_time": "50m",
+      "ingredients": [
+        "2 cangkir beras",
+        "200 ml santan",
+        "1 ruas kunyit, parut dan peras airnya",
+        "2 lembar daun salam",
+        "2 lembar daun jeruk",
+        "1 batang serai, memarkan",
+        "1 sdt garam",
+        "Air secukupnya"
+      ],
+      "video": "https://youtu.be/0YvgbP21tdE",
+      "stepDescription": [
+        "1. Cuci beras hingga bersih, tiriskan.",
+        "2. Campur beras dengan santan, air kunyit, daun salam, daun jeruk, serai, dan garam.",
+        "3. Masak beras dalam rice cooker hingga matang.",
+        "4. Aduk nasi dengan garpu agar tidak menggumpal.",
+        "5. Sajikan nasi kuning dengan lauk-pauk sesuai selera."
+      ],
+      "stepImage": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "category": "Aneka Nasi"
+    },
+    {
+      "id": "4",
+      "title": "Nasi Liwet",
+      "image": "https://tse2.mm.bing.net/th?id=OIP.7-bjC8bZEgFKBCZeklKLMwHaHH&pid=Api&P=0&h=220",
+      "description": "Nasi liwet khas Sunda yang gurih dan lezat.",
+      "total_time": "60m",
+      "ingredients": [
+        "2 cangkir beras",
+        "400 ml air",
+        "200 ml santan",
+        "2 lembar daun salam",
+        "2 lembar daun pandan",
+        "2 batang serai, memarkan",
+        "1 sdt garam",
+        "1 lembar daun jeruk",
+        "3 siung bawang putih, iris tipis",
+        "3 siung bawang merah, iris tipis"
+      ],
+      "video": "https://youtu.be/w57ZvvENvx4",
+      "stepDescription": [
+        "1. Cuci beras hingga bersih, tiriskan.",
+        "2. Tumis bawang putih dan bawang merah hingga harum.",
+        "3. Masukkan daun salam, daun pandan, serai, daun jeruk, dan garam, aduk rata.",
+        "4. Tambahkan beras, aduk rata.",
+        "5. Tuang santan dan air, masak dalam rice cooker hingga matang.",
+        "6. Aduk nasi dengan garpu agar tidak menggumpal.",
+        "7. Sajikan nasi liwet dengan lauk-pauk sesuai selera."
+      ],
+      "stepImage": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "category": "Aneka Nasi"
+    },
+    {
+      "id": "5",
+      "title": "Nasi Hainan",
+      "image": "https://tse3.mm.bing.net/th?id=OIP.oskzwOuixsMtOjAF2d9UsAHaEK&pid=Api&P=0&h=220",
+      "description": "Nasi Hainan dengan ayam rebus dan bumbu khas.",
+      "total_time": "90m",
+      "ingredients": [
+        "2 cangkir beras",
+        "1 ekor ayam",
+        "5 siung bawang putih, cincang halus",
+        "1 ruas jahe, parut",
+        "2 batang serai, memarkan",
+        "3 lembar daun pandan",
+        "1 sdt garam",
+        "1 sdt gula",
+        "2 sdm minyak wijen",
+        "Air secukupnya"
+      ],
+      "video": "https://youtu.be/NDOhW_sd6EI",
+      "stepDescription": [
+        "1. Rebus ayam dengan serai, daun pandan, dan garam hingga matang. Angkat dan sisihkan kaldunya.",
+        "2. Tumis bawang putih dan jahe hingga harum.",
+        "3. Masukkan beras, aduk rata.",
+        "4. Tuang kaldu ayam secukupnya, masak dalam rice cooker hingga matang.",
+        "5. Sajikan nasi Hainan dengan potongan ayam, sambal, dan kecap."
+      ],
+      "stepImage": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "category": "Aneka Nasi"
+    },
+    {
+      "id": "6",
+      "title": "Nasi Kebuli",
+      "image": "https://tse1.mm.bing.net/th?id=OIP.-7oD8GAswdR8dxBXDr26GAHaFj&pid=Api&P=0&h=220",
+      "description": "Nasi kebuli dengan daging kambing dan rempah khas Timur Tengah.",
+      "total_time": "120m",
+      "ingredients": [
+        "2 cangkir beras",
+        "500 gr daging kambing",
+        "1 batang kayu manis",
+        "3 butir cengkeh",
+        "2 lembar daun salam",
+        "2 lembar daun jeruk",
+        "1 batang serai, memarkan",
+        "1 sdt garam",
+        "1 sdt merica",
+        "2 sdm minyak samin",
+        "2 siung bawang putih, cincang halus",
+        "2 siung bawang merah, cincang halus"
+      ],
+      "video": "https://youtu.be/JLN3B1jl5J0",
+      "stepDescription": [
+        "1. Tumis bawang putih dan bawang merah hingga harum.",
+        "2. Masukkan daging kambing, kayu manis, cengkeh, daun salam, daun jeruk, serai, garam, dan merica. Masak hingga daging berubah warna.",
+        "3. Tambahkan air secukupnya, masak hingga daging empuk.",
+        "4. Masukkan beras, aduk rata.",
+        "5. Tuang kaldu kambing, masak dalam rice cooker hingga matang.",
+        "6. Sajikan nasi kebuli dengan acar dan sambal."
+      ],
+      "stepImage": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "category": "Aneka Nasi"
+    },
+    {
+      "id": "7",
+      "title": "Nasi Goreng Kampung",
+      "image": "https://tse1.mm.bing.net/th?id=OIP.aBoZ83lhm5owrTMyFrWg9AHaD4&pid=Api&P=0&h=220",
+      "description": "Nasi goreng kampung dengan cita rasa tradisional.",
+      "total_time": "25m",
+      "ingredients": [
+        "2 porsi nasi putih",
+        "2 butir telur",
+        "100 gr ikan teri, goreng kering",
+        "50 gr kangkung",
+        "2 siung bawang putih, cincang halus",
+        "3 siung bawang merah, iris tipis",
+        "1 sdm kecap manis",
+        "Garam dan merica secukupnya",
+        "2 sdm minyak goreng"
+      ],
+      "video": "https://youtu.be/xBZeOw681vk",
+      "stepDescription": [
+        "1. Panaskan minyak di wajan, tumis bawang putih dan bawang merah hingga harum.",
+        "2. Masukkan ikan teri dan kangkung, aduk rata.",
+        "3. Tambahkan nasi putih, kecap manis, garam, dan merica.",
+        "4. Aduk rata hingga semua bahan tercampur sempurna.",
+        "5. Geser nasi ke tepi wajan, tuang telur di tengah, orak-arik hingga matang.",
+        "6. Campur telur dengan nasi, aduk rata dan angkat.",
+        "7. Sajikan nasi goreng kampung panas."
+      ],
+      "stepImage": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "category": "Aneka Nasi"
+    },
+    {
+      "id": "8",
+      "title": "Nasi Gandul",
+      "image": "https://tse4.mm.bing.net/th?id=OIP.r-quPkMS5fTRIuXvLvyKfAHaE9&pid=Api&P=0&h=220",
+      "description": "Nasi gandul dengan daging sapi dan kuah santan.",
+      "total_time": "90m",
+      "ingredients": [
+        "2 cangkir beras",
+        "500 gr daging sapi, potong dadu",
+        "200 ml santan",
+        "3 siung bawang putih",
+        "5 siung bawang merah",
+        "1 ruas lengkuas, memarkan",
+        "2 lembar daun salam",
+        "2 lembar daun jeruk",
+        "1 batang serai, memarkan",
+        "1 sdt garam",
+        "1 sdt gula",
+        "Air secukupnya"
+      ],
+      "video": "https://youtu.be/LIBAoTW_lOA",
+      "stepDescription": [
+        "1. Rebus daging sapi hingga empuk, sisihkan kaldunya.",
+        "2. Tumis bawang putih, bawang merah, lengkuas, daun salam, daun jeruk, dan serai hingga harum.",
+        "3. Masukkan daging sapi, aduk rata.",
+        "4. Tambahkan santan, garam, dan gula. Masak hingga kuah mengental.",
+        "5. Sajikan nasi dengan daging dan kuah gandul."
+      ],
+      "stepImage": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "category": "Aneka Nasi"
+    },
+    {
+      "id": "9",
+      "title": "Nasi Lemak",
+      "image": "https://tse1.mm.bing.net/th?id=OIP.rJl6o_Jn-rsm8JygMC_3vAHaE8&pid=Api&P=0&h=220",
+      "description": "Nasi lemak dengan santan, daun pandan, dan lauk pendamping.",
+      "total_time": "60m",
+      "ingredients": [
+        "2 cangkir beras",
+        "200 ml santan",
+        "2 lembar daun pandan",
+        "2 lembar daun salam",
+        "1 sdt garam",
+        "Air secukupnya"
+      ],
+      "video": "https://youtu.be/ULXXPGl-39k",
+      "stepDescription": [
+        "1. Cuci beras hingga bersih, tiriskan.",
+        "2. Campur beras dengan santan, daun pandan, daun salam, dan garam.",
+        "3. Masak beras dalam rice cooker hingga matang.",
+        "4. Aduk nasi dengan garpu agar tidak menggumpal.",
+        "5. Sajikan nasi lemak dengan lauk-pauk sesuai selera."
+      ],
+      "stepImage": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "category": "Aneka Nasi"
+    },
+    {
+      "id": "10",
+      "title": "Nasi Timbel",
+      "image": "https://tse1.mm.bing.net/th?id=OIP.gVC3VJ0x3uaU38eNyEb5NAHaE7&pid=Api&P=0&h=220",
+      "description": "Nasi timbel khas Sunda yang disajikan dengan daun pisang.",
+      "total_time": "50m",
+      "ingredients": [
+        "2 cangkir beras",
+        "400 ml air",
+        "2 lembar daun salam",
+        "1 batang serai, memarkan",
+        "1 sdt garam",
+        "Daun pisang secukupnya"
+      ],
+      "video": "https://youtu.be/uQspgcErtbg",
+      "stepDescription": [
+        "1. Cuci beras hingga bersih, tiriskan.",
+        "2. Masak beras dengan air, daun salam, serai, dan garam hingga matang.",
+        "3. Aduk nasi dengan garpu agar tidak menggumpal.",
+        "4. Ambil selembar daun pisang, letakkan nasi di atasnya, gulung dan lipat ujungnya.",
+        "5. Kukus nasi timbel selama 10 menit.",
+        "6. Sajikan nasi timbel dengan lauk-pauk sesuai selera."
+      ],
+      "stepImage": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "category": "Aneka Nasi"
+    }
+  ]
+}

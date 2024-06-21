@@ -7,7 +7,7 @@ export default function CategoryCard(props) {
     const clickDuration = mouseUpTime - mouseDownTime;
 
     if (clickDuration < 200) {
-      console.log(props.title);
+      props.onClick();
     }
   };
 

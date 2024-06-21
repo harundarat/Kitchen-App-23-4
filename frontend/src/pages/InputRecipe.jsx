@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect } from "react";
 import { UserContext } from "../context/userContext";
 import { Icon } from "@iconify/react";
 import { Button, Modal, Label, Checkbox } from "flowbite-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   AdditionalInfoContext,
   AdditionalInfoProvider,
@@ -11,6 +12,8 @@ import InputForm from "../components/common/InputForm";
 import TextAreaForm from "../components/common/TextAreaForm";
 import DropdownForm from "../components/common/DropdownForm";
 import ImageForm from "../components/common/ImageForm";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const time = {
   jam: [
@@ -31,16 +34,27 @@ const unitBahan = {
     "liter",
     "ml",
     "gelas",
+    "piring",
     "butir",
     "siung",
     "batang",
+    "buah",
+    "potong",
     "secukupnya",
   ],
 };
 
 export default function InputRecipe() {
+  const navigate = useNavigate();
   const { isLogged } = useContext(UserContext);
+  console.log("🚀 ~ InputRecipe ~ isLogged:", isLogged);
   const [tabActive, setTabActive] = useState(0);
+  useEffect(() => {
+    if (isLogged == false) {
+      navigate(-1, { replace: true });
+    }
+  }, [isLogged]);
+
   return (
     <main className="px-5 pb-10">
       <Header tabActive={tabActive} changeActiveTab={(a) => setTabActive(a)} />
@@ -48,8 +62,6 @@ export default function InputRecipe() {
         activeTab={tabActive}
         changeActiveTab={(a) => setTabActive(a)}
       />
-      {/* <ModalAlert message={"Nama Belum terisi!"} /> */}
-      {/* <ModalEditBahan /> */}
     </main>
   );
 }
@@ -86,6 +98,8 @@ function Header({ tabActive, changeActiveTab }) {
 }
 
 function FormRecipe({ activeTab, changeActiveTab }) {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [openAlert, setOpenAlert] = useState({
     input: {
       open: false,
@@ -95,6 +109,7 @@ function FormRecipe({ activeTab, changeActiveTab }) {
     delete: false,
   });
   const [formData, setFormData] = useState({});
+  // console.log(formData);
   const [selectedImage, setSelectedImage] = useState({ file: null, url: null });
   const [waktu, setWaktu] = useState({ jam: 0, menit: 0 });
 
@@ -204,7 +219,7 @@ function FormRecipe({ activeTab, changeActiveTab }) {
   }
   // END HANDLING BAHAN
 
-  const handlingSimpan = () => {
+  const handlingSimpan = async () => {
     if (!formData.title) {
       alertInput("Nama Resep belum terisi!");
       return;
@@ -237,21 +252,54 @@ function FormRecipe({ activeTab, changeActiveTab }) {
     data.append("title", formData.title);
     data.append("image", formData.image);
     data.append("description", formData.description);
-    data.append("time", formData.time);
-    data.append("ingredients", JSON.stringify(formData.ingredients));
+    data.append("total_time", formData.time);
+    formData.ingredients?.map((item) => {
+      data.append("ingredients", item);
+    });
     data.append("video", formData.steps.video);
     formData.steps.step.forEach((step, index) => {
-      data.append(`step[${index}][description]`, step.description);
-      data.append(`step[${index}][image]`, step.image || "");
+      data.append(`stepDescription`, step.description);
+      data.append(`stepImages`, step.image || "");
     });
-    data.append("category", JSON.stringify(formData.category));
+    formData.category?.map((item) => {
+      data.append("category", item);
+    });
+    console.log(formData);
+    // return;
 
-    alertInput("Data berhasil disimpan!");
-    console.log(data);
+    try {
+      setLoading(true);
+      const response = await axios.post("/recipes", data);
+      console.log(response);
+      if (response.status == 200) {
+        navigate(-1, { replace: true });
+        toast.success("Resep berhasil diunggah");
+      }
+    } catch (error) {
+      console.log("🚀 ~ handlingSimpan ~ error:", error);
+      setOpenAlert({
+        input: {
+          open: true,
+          message: "Error Upload data, try again later",
+        },
+      });
+      return;
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <>
+      {loading && (
+        <div className="fixed left-1/2 top-1/2 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center bg-primary bg-opacity-50">
+          <div className="flex h-40 w-40 flex-col items-center justify-center gap-2 rounded bg-bg font-medium">
+            <Icon icon="svg-spinners:180-ring-with-bg" width={40} />
+            <h1>Upload data...</h1>
+          </div>
+        </div>
+      )}
+
       <form className="mx-auto mt-9 max-w-[720px]" action="">
         {/* TAB DASAR */}
         <div
@@ -499,6 +547,9 @@ function FormRecipe({ activeTab, changeActiveTab }) {
       {/* MODAL */}
       <ModalAlert
         message="Yakin ingin membatalkan?"
+        onYes={() => {
+          navigate(-1, { replace: true });
+        }}
         onCancel={() => setOpenAlert({ ...openAlert, cancel: false })}
         open={openAlert.cancel}
         close={(e) => setOpenAlert({ ...openAlert, cancel: e })}
@@ -963,7 +1014,7 @@ function ModalEditLangkah({ open, onSave, langkah, onClose }) {
       <Modal
         show={open}
         onClose={() => onClose(false)}
-        className="relative bg-primary"
+        className="relative bg-primary bg-opacity-50"
       >
         <div className="absolute left-1/2 top-1/2 w-full max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded bg-inherit">
           <Modal.Header className="mx-auto">Edit Langkah</Modal.Header>

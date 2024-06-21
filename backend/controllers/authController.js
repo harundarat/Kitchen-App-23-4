@@ -34,7 +34,9 @@ const loginUser = async (req, res) => {
             jwt.sign({ username: user.username, id: user._id, preferences: user.preferences }, process.env.JWT_SECRET, {}, (err, token) => {
                 if (err) throw err;
                 res.cookie("token", token, {
-                    httpOnly: true
+                    httpOnly: true,
+                    sameSite: "none",
+                    secure: true
                 });
                 res.status(200).json({
                     id: user._id,
@@ -63,6 +65,8 @@ const logoutUser = (req, res) => {
 
     res.cookie("token", "", {
         httpOnly: true,
+        sameSite: "none",
+        secure: true,
         expires: new Date(0)
     });
 

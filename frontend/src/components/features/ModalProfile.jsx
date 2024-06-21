@@ -1,26 +1,37 @@
 import axios from "axios";
 import { useState, createContext, useContext } from "react";
 import { UserContext } from "../../context/userContext";
+import { toast } from "react-hot-toast";
+import { Icon } from "@iconify/react";
+import { useNavigate } from "react-router-dom";
 
 const ModalProfileContext = createContext();
 
 function ModalProfileProvider({ children }) {
+  const navigate = useNavigate();
   const [toggle, setToggle] = useState(false);
-  const { setIsLogged } = useContext(UserContext);
+  const { setIsLogged, user } = useContext(UserContext);
+  const [loading, setLoading] = useState(false);
 
   const handleToggle = () => {
     setToggle(!toggle);
   };
-  const logout = () => {
-    axios
-      .post("/auth/logout")
-      .then((res) => {
-        console.log(res.data);
-        setIsLogged(false);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+  const logout = async () => {
+    try {
+      setLoading(true);
+      const logout = await axios.post("/auth/logout");
+      if (logout.status != 200) {
+        toast.error("Erorr logout");
+        return;
+      }
+      toast.success("Berhasil Logout");
+      setIsLogged(false);
+    } catch (error) {
+      console.log(error);
+      toast.error(error.response.data.error || error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -37,14 +48,32 @@ function ModalProfileProvider({ children }) {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="ml-auto flex h-fit w-36 flex-col items-start gap-2 rounded-md border bg-bg p-5 shadow">
-            <button className="flex w-full justify-start text-primary hover:text-opacity-60">
+            <button
+              onClick={() => {
+                navigate(`/profile/${user.username}`);
+                setToggle(false);
+              }}
+              className="flex w-full justify-start text-primary hover:text-opacity-60"
+            >
               Resep
             </button>
-            <button className="flex w-full justify-start text-primary hover:text-opacity-60">
+            <button
+              onClick={() => {
+                navigate(`/profile/${user.username}?tab=saved`);
+                setToggle(false);
+              }}
+              className="flex w-full justify-start text-primary hover:text-opacity-60"
+            >
               Disimpan
             </button>
             <hr className="w-full border-[1px] border-primary border-opacity-20" />
-            <button className="flex w-full justify-start text-primary hover:text-opacity-60">
+            <button
+              onClick={() => {
+                navigate(`/profile/edit`);
+                setToggle(false);
+              }}
+              className="flex w-full justify-start text-primary hover:text-opacity-60"
+            >
               Pengaturan
             </button>
             <button
@@ -56,6 +85,14 @@ function ModalProfileProvider({ children }) {
           </div>
         </div>
       </div>
+      {loading && (
+        <div className="fixed left-1/2 top-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center bg-primary bg-opacity-50">
+          <div className="flex h-40 w-40 flex-col items-center justify-center gap-2 rounded bg-bg font-medium">
+            <Icon icon="svg-spinners:180-ring-with-bg" width={40} />
+            <h1>Loading...</h1>
+          </div>
+        </div>
+      )}
     </ModalProfileContext.Provider>
   );
 }

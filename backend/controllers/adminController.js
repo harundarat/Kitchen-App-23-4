@@ -2,9 +2,47 @@ const User = require('../models/user');
 const Recipe = require('../models/recipe');
 const Nutrition = require('../models/nutrition');
 const Admin = require('../models/admin');
+const Like = require('../models/like');
+const SaveRecipe = require('../models/saveRecipe');
 const { comparePassword } = require("../utils/hashPass");
 const jwt = require("jsonwebtoken");
 const validateRequest = require("../utils/validateRequest");
+
+// Get user by ID
+const getUserById = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({
+                error: "User not found"
+            });
+        }
+        res.json(user);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+}
+
+// Get user by username
+const getUserByUsername = async (req, res) => {
+    try {
+        const user = await User.findOne({ username: req.params.username });
+        if (!user) {
+            return res.status(404).json({
+                error: "User not found"
+            });
+        }
+        res.json(user);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+}
 
 const deleteUser = async (req, res) => {
     try {
@@ -12,17 +50,83 @@ const deleteUser = async (req, res) => {
         await User.findByIdAndDelete(userId);
 
         // Get all recipes of the user and delete them
-        const recipes = await Recipe.find({ userId });
+        const recipes = await Recipe.find({ user_id: userId });
         const recipeIds = recipes.map(recipe => recipe._id);
-        await Recipe.deleteMany({ userId });
+        await Recipe.deleteMany({ user_id: userId });
 
         // Delete all nutrition data associated with the deleted recipes
-        await Nutrition.deleteMany({ recipeId: { $in: recipeIds } });
+        await Nutrition.deleteMany({ recipe_id: { $in: recipeIds } });
+        await Like.deleteMany({ recipe_id: { $in: recipeIds } });
+        await SaveRecipe.deleteMany({ recipe_id: { $in: recipeIds } });
 
         res.status(200).json({ message: 'User and associated data deleted' });
 
     } catch (error) {
         res.status(500).json({ error: 'Server error' });
+    }
+}
+
+// Get recipe by id or title
+const getRecipeByIdOrTitle = async (req, res) => {
+    try {
+        const { id, title } = req.query;
+
+        let recipe;
+        if (id) {
+            // Find recipe by id
+            recipe = await Recipe.findById(id);
+        } else if (title) {
+            // Find recipe by title
+            recipe = await Recipe.findOne({ title: title });
+        }
+
+        if (!recipe) {
+            return res.status(404).json({
+                error: "Recipe not found"
+            });
+        }
+
+        res.status(200).json({
+            recipe
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+}
+
+// Get all recipes
+const getAllRecipesAdmin = async (req, res) => {
+    try {
+        const recipes = await Recipe.find();
+        res.json(recipes);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+}
+
+// Get recipe by ID
+const getRecipeById = async (req, res) => {
+    try {
+        const recipe = await Recipe.findById(req.params.id)
+        const nutrition = await Nutrition.findOne({ recipe_id: req.params.id });
+        if (!recipe) {
+            return res.status(404).json({
+                error: "Recipe not found"
+            });
+        }
+        res.json({ recipe, nutrition });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            error: "Internal server error"
+        });
     }
 }
 
@@ -152,7 +256,12 @@ const logoutAdmin = (req, res) => {
 }
 
 module.exports = {
+    getUserById,
+    getUserByUsername,
     deleteUser,
+    getRecipeByIdOrTitle,
+    getAllRecipesAdmin,
+    getRecipeById,
     deleteRecipeAdmin,
     getAdmin,
     getUsers,

@@ -43,7 +43,7 @@ const DropdownForm = ({
       >
         {prefix && <span className="text-gray-400">{prefix}</span>}
         <select
-          className={`w-fit bg-bg text-primary focus:outline-none ${disabled ? "cursor-not-allowed" : ""}`}
+          className={`w-fit border-none bg-bg p-0 text-primary focus:outline-none focus:ring-0${disabled ? "cursor-not-allowed" : ""}`}
           onChange={handleChange}
           value={value}
           disabled={disabled}
