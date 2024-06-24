@@ -6,28 +6,23 @@ const { hashPassword, comparePassword } = require("../utils/hashPass");
 const uploadImages = require("../utils/uploadImage");
 const jwt = require('jsonwebtoken');
 
-
-// Create new user
 const registerUser = async (req, res) => {
 
     try {
         const { username, fullName, email, password, preferences } = req.body;
 
-        // Check if fullName was entered
         if (!fullName) {
             return res.status(400).json({
                 error: "Fullname is required"
             });
         }
 
-        // Check if password is good
         if (!password || password.length < 6) {
             return res.status(400).json({
                 error: "Password is required and should be at least 6 characters long"
             });
         }
 
-        // Check if username was exists
         const unameExist = await User.findOne({ username });
         if (unameExist) {
             return res.status(400).json({
@@ -35,15 +30,14 @@ const registerUser = async (req, res) => {
             });
         }
 
-        // Check if email was exists
-        const exist = await User.findOne({ email });
-        if (exist) {
+        const emailExist = await User.findOne({ email });
+        if (emailExist) {
             return res.status(400).json({
                 error: "Email already exists"
             });
         }
 
-        // Create new user
+        // Hash password then save user
         const hashedPassword = await hashPassword(password);
         const user = new User({
             username,
@@ -75,7 +69,6 @@ const getUser = async (req, res) => {
     try {
         const user = await User.findOne({ username: req.params.username }).select("-password");
 
-        // Check if user exists
         if (!user) {
             return res.status(404).json({
                 error: "User not found"
@@ -99,18 +92,14 @@ const getUser = async (req, res) => {
     }
 }
 
-// Get saved recipes
 const getUserSavedRecipes = async (req, res) => {
     try {
 
-        // Get total saved recipes count
         const totalSavedRecipes = await SaveRecipe.countDocuments({ user_id: req.user.id });
 
-        // Get paginated saved recipes
         const savedRecipes = await SaveRecipe.find({ user_id: req.user.id }).select("recipe_id")
             .sort({ created_at: -1 })
 
-        // Get recipe ids
         const recipeIds = savedRecipes.map(savedRecipe => savedRecipe.recipe_id);
 
         // Get recipes by ids
@@ -130,18 +119,14 @@ const getUserSavedRecipes = async (req, res) => {
     }
 }
 
-// Get liked recipes
 const getUserLikedRecipes = async (req, res) => {
     try {
 
-        // Get total liked recipes count
         const totalLikedRecipes = await Like.countDocuments({ user_id: req.user.id });
 
-        // Get paginated liked recipes
         const likedRecipes = await Like.find({ user_id: req.user.id }).select("recipe_id")
             .sort({ created_at: -1 });
 
-        // Get recipe ids
         const recipeIds = likedRecipes.map(likedRecipe => likedRecipe.recipe_id);
 
         // Get recipes by ids
@@ -178,7 +163,6 @@ const editUser = async (req, res) => {
             imageUrl = image;
         }
 
-        // Find user by username
         const user = await User.findOne({ username: req.params.username }).select("-activity");
 
         // Update user profile
@@ -210,7 +194,6 @@ const editUser = async (req, res) => {
 const deleteUser = async (req, res) => {
     try {
 
-        // password is required to delete user
         const { password } = req.body;
         if (!password) {
             return res.status(400).json({
@@ -232,16 +215,13 @@ const deleteUser = async (req, res) => {
             return res.status(400).json({
                 error: "Incorrect password"
             });
-
-        } else {
-
-            // Delete user
-            await user.deleteOne();
-            res.status(200).json({
-                message: "User deleted successfully"
-            });
-
         }
+
+        await user.deleteOne();
+
+        res.status(200).json({
+            message: "User deleted successfully"
+        });
 
     } catch (error) {
 

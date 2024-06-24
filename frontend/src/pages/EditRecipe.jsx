@@ -47,7 +47,6 @@ const unitBahan = {
 export default function EditRecipe() {
   const navigate = useNavigate();
   const { isLogged } = useContext(UserContext);
-  console.log("🚀 ~ InputRecipe ~ isLogged:", isLogged);
   const [tabActive, setTabActive] = useState(0);
   useEffect(() => {
     if (isLogged == false) {
@@ -111,26 +110,7 @@ function FormRecipe({ activeTab, changeActiveTab }) {
   });
   const [selectedImage, setSelectedImage] = useState({ file: null, url: null });
   const [formData, setFormData] = useState({});
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await axios.get(`/recipes/${idRecipe}`);
-        const recipe = data?.recipe;
-        console.log("🚀 ~ recipe:", recipe);
-        setFormData({
-          title: recipe.title,
-          description: recipe.description,
-          category: recipe.category,
-        });
-        setSelectedImage({ file: null, url: recipe.image });
-      } catch (error) {
-        navigate("/recipe");
-        return;
-      }
-    })();
-  }, []);
-
-  const [waktu, setWaktu] = useState({ jam: 0, menit: 0 });
+  console.log("🚀 ~ FormRecipe ~ formData:", formData);
 
   // STATE BAHAN
   const [modalEditBahan, setModalEditBahan] = useState(false);
@@ -143,6 +123,31 @@ function FormRecipe({ activeTab, changeActiveTab }) {
   const [listBahan, setListBahan] = useState([]);
   const [updatedBahan, setUpdatedBahan] = useState({ index: null, bahan: {} });
   // END STATE BAHAN
+  const [initSteps, setInitSteps] = useState([]);
+
+  // console.log("🚀 ~ FormRecipe ~ formData:", formData);
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await axios.get(`/recipes/${idRecipe}`);
+        const recipe = data?.recipe;
+        setFormData({
+          title: recipe.title,
+          description: recipe.description,
+          category: recipe.category,
+          total_time: recipe.total_time,
+        });
+        setInitSteps(recipe.steps);
+        setListBahan(parseBahan(recipe.ingredients));
+        setSelectedImage({ file: null, url: recipe.image });
+      } catch (error) {
+        navigate("/recipe");
+        return;
+      }
+    })();
+  }, []);
+
+  const [waktu, setWaktu] = useState({ jam: 0, menit: 0 });
 
   useEffect(() => {
     let bahanString = listBahan.map((bahan) => {
@@ -162,7 +167,7 @@ function FormRecipe({ activeTab, changeActiveTab }) {
 
   const handleWaktu = (j, m) => {
     let minute = parseInt(j) * 60 + parseInt(m);
-    handleChange("time", minute);
+    handleChange("total_time", minute);
   };
 
   // HANDLING BAHAN
@@ -243,7 +248,7 @@ function FormRecipe({ activeTab, changeActiveTab }) {
       alertInput("Nama Resep belum terisi!");
       return;
     }
-    if (!formData.image) {
+    if (!formData.image && !selectedImage.url) {
       alertInput("Foto Resep belum terisi!");
       return;
     }
@@ -251,7 +256,7 @@ function FormRecipe({ activeTab, changeActiveTab }) {
       alertInput("Deskripsi Resep belum terisi!");
       return;
     }
-    if (!formData.time || formData.time === 0) {
+    if (!formData.total_time || formData.total_time === 0) {
       alertInput("Waktu Memasak belum terisi!");
       return;
     }
@@ -269,35 +274,37 @@ function FormRecipe({ activeTab, changeActiveTab }) {
     }
     const data = new FormData();
     data.append("title", formData.title);
-    data.append("image", formData.image);
+    if (formData.image) data.append("image", formData.image);
     data.append("description", formData.description);
-    data.append("total_time", formData.time);
+    data.append("total_time", parseInt(formData.total_time));
     formData.ingredients?.map((item) => {
       data.append("ingredients", item);
     });
-    data.append("video", formData.steps.video);
-    formData.steps.step.forEach((step, index) => {
-      data.append(`stepDescription`, step.description);
-      data.append(`stepImages`, step.image || "");
-    });
+    if (formData.steps) {
+      data.append("video", formData.steps.video);
+      formData.steps.step.forEach((step, index) => {
+        data.append(`stepDescription`, step.description);
+        data.append(`stepImages`, step.image || "");
+      });
+    }
     formData.category?.map((item) => {
       data.append("category", item);
     });
 
     try {
       setLoading(true);
-      const response = await axios.post("/recipes", data);
+      const response = await axios.put(`/recipes/${idRecipe}`, data);
       console.log(response);
       if (response.status == 200) {
         navigate(-1, { replace: true });
-        toast.success("Resep berhasil diunggah");
+        toast.success("Resep berhasil diedit");
       }
     } catch (error) {
       console.log("🚀 ~ handlingSimpan ~ error:", error);
       setOpenAlert({
         input: {
           open: true,
-          message: "Error Upload data, try again later",
+          message: "Error edit data, try again later",
         },
       });
       return;
@@ -393,6 +400,7 @@ function FormRecipe({ activeTab, changeActiveTab }) {
                 handleWaktu(time, waktu.menit);
               }}
               postfix={"Jam"}
+              selected={minsToTime(formData.total_time).jam}
             />
             <DropdownForm
               items={time.menit}
@@ -401,6 +409,7 @@ function FormRecipe({ activeTab, changeActiveTab }) {
                 handleWaktu(waktu.jam, time);
               }}
               postfix="Menit"
+              selected={minsToTime(formData.total_time).menit}
             />
           </div>
           <p className="text-sm italic text-gray-500">*Required</p>
@@ -514,7 +523,10 @@ function FormRecipe({ activeTab, changeActiveTab }) {
           id="langkah"
           className={`flex flex-col gap-7 ${activeTab !== 2 ? "hidden" : ""}`}
         >
-          <FormLangkah getSteps={(data) => handleChange("steps", data)} />
+          <FormLangkah
+            setSteps={initSteps}
+            getSteps={(data) => handleChange("steps", data)}
+          />
         </div>
         {/* END TAB LANGKAH */}
 
@@ -591,7 +603,7 @@ function FormRecipe({ activeTab, changeActiveTab }) {
   );
 }
 
-function FormLangkah({ getSteps }) {
+function FormLangkah({ getSteps, setSteps }) {
   const [openAlert, setOpenAlert] = useState({ open: false, message: "" });
   const [modalEditLangkah, setModalEditLangkah] = useState(false);
   const [langkah, setLangkah] = useState({
@@ -618,6 +630,20 @@ function FormLangkah({ getSteps }) {
 
     if (getSteps) getSteps({ video: langkah.video, step: removedUrl });
   }, [langkah]);
+
+  useEffect(() => {
+    let thisStep = [];
+    setSteps.step?.map((item) => {
+      thisStep.push({
+        description: item.description,
+        image: { file: null, url: item.image || "" },
+      });
+    });
+    setLangkah({
+      video: setSteps.video,
+      step: thisStep,
+    });
+  }, [setSteps.step?.length]);
 
   const handleClickImage = () => {
     document.getElementById("langkah-image").click();
@@ -675,6 +701,7 @@ function FormLangkah({ getSteps }) {
           name="video-langkah"
           placeholder="Masukan video berupa link video youtube"
           onChange={(e) => setLangkah({ ...langkah, video: e.target.value })}
+          value={langkah.video}
         />
       </div>
       <div>
@@ -818,7 +845,6 @@ function FormLangkah({ getSteps }) {
 }
 
 function FormTambahan({ getCategory, setCategory }) {
-  console.log("🚀 ~ FormTambahan ~ setCategory:", setCategory);
   const { additionalInfo } = useContext(AdditionalInfoContext);
   const [checkedCategories, setCheckedCategories] = useState(
     additionalInfo?.kategori?.reduce((acc, category) => {
@@ -835,9 +861,9 @@ function FormTambahan({ getCategory, setCategory }) {
       }));
     };
     if (setCategory?.length > 0) {
-      setChecked(setCategory);
+      setCategory.map((cat) => setChecked(cat));
     }
-  }, [setCategory?.length > 0]);
+  }, [setCategory?.length]);
 
   useEffect(() => {
     if (getCategory) getCategory(getCheckedCategories());
@@ -1145,4 +1171,53 @@ function ModalEditLangkah({ open, onSave, langkah, onClose }) {
       </Modal>
     </>
   );
+}
+
+function minsToTime(minutes) {
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  return {
+    jam: hours,
+    menit: remainingMinutes,
+  };
+}
+
+function parseBahan(bahan) {
+  return bahan.map((item) => {
+    const regex =
+      /^(\d+\/\d+|\d+\s\d+\/\d+|\d+|\d+\/\d+)?\s*(secukupnya|[a-zA-Z]+)\s+(.*)$/;
+    const match = item.match(regex);
+
+    if (!match) {
+      return {
+        jumlah: "0",
+        jumlah_dec: "0",
+        unit: "secukupnya",
+        bahan: item.trim(),
+      };
+    }
+
+    let jumlah = match[1] || "0";
+    let jumlah_dec = "0";
+
+    if (jumlah.includes(" ")) {
+      const parts = jumlah.split(" ");
+      jumlah = parts[0];
+      jumlah_dec = parts[1];
+    } else if (jumlah.includes("/")) {
+      jumlah_dec = jumlah;
+      jumlah = "0";
+    }
+
+    const unit = match[2].trim();
+    const bahan = match[3].trim();
+
+    return {
+      jumlah: jumlah,
+      jumlah_dec: jumlah_dec,
+      unit: unit,
+      bahan: bahan,
+    };
+  });
 }

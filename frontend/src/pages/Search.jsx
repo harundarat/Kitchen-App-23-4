@@ -19,11 +19,11 @@ export default function Search() {
   }, []);
 
   return (
-    <main className="mx-auto box-border flex min-h-svh w-full min-w-[360px] max-w-[1080px] gap-5 px-5 py-24 lg:mx-auto lg:px-0">
+    <main className="mx-auto box-border flex min-h-svh w-full min-w-[360px] max-w-[1080px] flex-col gap-5 px-5 py-24 md:flex-row lg:mx-auto lg:px-0">
       <AdditionalInfoProvider>
         <SidebarFilter />
       </AdditionalInfoProvider>
-      <section className="mt-96 w-full md:mt-4">
+      <section className="mt-4 w-full">
         <header className="mb-6 flex flex-col gap-4">
           <h1 className="line-clamp-1 w-full font-medium text-primary">
             {`Menampilkan Hasil Pencarian "${searchParams().recipe ? decodeURIComponent(searchParams().recipe) : "All"}"`}
@@ -68,7 +68,6 @@ function ResultSearch() {
       try {
         setLoading(true);
         const { data } = await axios.get(`/recipes?${urlEndpoint}&limit=12`);
-        console.log(data);
         setResultSearch(data);
       } catch (error) {
         console.error(error);
@@ -182,6 +181,7 @@ function SidebarFilter() {
       return acc;
     }, {}),
   );
+  const [toggleFilter, setToggleFilter] = useState(false);
 
   useEffect(() => {
     filter.category.map((category) => {
@@ -248,33 +248,50 @@ function SidebarFilter() {
       (query.category ? `${query.category}&` : "") +
       (query.ingredients ? `${query.ingredients}&` : "");
 
-    console.log(querySearch);
     navigate(`/search?${querySearch}page=${query.page}`);
     window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
   };
+  const handleToggleFilter = (e) => {
+    e.stopPropagation();
+    if (window.innerWidth < 768) {
+      setToggleFilter(!toggleFilter);
+    }
+  };
 
   return (
     <>
       <Sidebar
         aria-label="sidebar-filter"
-        className="absolute z-40 mt-4 h-fit w-full max-w-[255px] rounded-lg border border-gray-300 bg-gray-100 shadow md:static"
+        className="mt-4 w-full select-none rounded-lg border border-gray-300 bg-gray-100 shadow md:h-fit md:max-w-[255px]"
       >
         <Sidebar.Items>
           {/* Filter Header */}
-          <Sidebar.ItemGroup className="m-0 border-none p-0">
-            <Sidebar.Item className="justify-start">
+          <Sidebar.ItemGroup
+            onClick={(e) => handleToggleFilter(e)}
+            className="m-0 cursor-pointer border-none p-0 md:cursor-default"
+          >
+            <Sidebar.Item className="justify-start hover:bg-gray-200 md:hover:bg-gray-100">
               <div className="flex items-center gap-2">
                 <Icon className="text-primary" icon="uil:filter" width={22} />
                 <h1 className="font-semibold">Filter</h1>
+                <Icon
+                  className="ml-auto text-primary md:hidden"
+                  icon="mingcute:down-fill"
+                  width={19}
+                />
               </div>
             </Sidebar.Item>
           </Sidebar.ItemGroup>
-          <hr className="my-2 border border-gray-300" />
+          <hr
+            className={`my-2 ${toggleFilter ? "block" : "hidden"} border border-gray-200 md:block`}
+          />
           {/* Filter Berdasarkan Kategori */}
-          <Sidebar.ItemGroup className="m-0 border-none p-0">
+          <Sidebar.ItemGroup
+            className={`m-0 ${toggleFilter ? "block" : "hidden"} border-none p-0 md:block`}
+          >
             <Sidebar.Collapse
               className="gap-4 font-medium hover:bg-gray-200"
               label="Berdasarkan Kategori"
@@ -296,9 +313,13 @@ function SidebarFilter() {
               ))}
             </Sidebar.Collapse>
           </Sidebar.ItemGroup>
-          <hr className="my-1 border border-gray-200" />
+          <hr
+            className={`my-2 ${toggleFilter ? "block" : "hidden"} border border-gray-200 md:block`}
+          />
           {/* Filter Berdasarkan Bahan */}
-          <Sidebar.ItemGroup className="m-0 border-none p-0">
+          <Sidebar.ItemGroup
+            className={`m-0 ${toggleFilter ? "block" : "hidden"} border-none p-0 md:block`}
+          >
             <Sidebar.Item className="justify-start">
               <div className="flex flex-col gap-4">
                 <h1 className="font-medium">Berdasarkan Bahan</h1>
@@ -322,9 +343,13 @@ function SidebarFilter() {
               </div>
             </Sidebar.Item>
           </Sidebar.ItemGroup>
-          <hr className="my-2 border border-gray-200" />
+          <hr
+            className={`my-2 ${toggleFilter ? "block" : "hidden"} border border-gray-200 md:block`}
+          />
           {/* Button Terapkan */}
-          <Sidebar.ItemGroup className="m-0 border-none p-0">
+          <Sidebar.ItemGroup
+            className={`m-0 ${toggleFilter ? "block" : "hidden"} border-none p-0 md:block`}
+          >
             <Sidebar.Item>
               <button
                 className="rounded-full border border-gray-300 bg-primary px-4 py-2 text-bg shadow-sm hover:bg-opacity-90 active:scale-95"
@@ -375,7 +400,7 @@ function Autocomplete({ data, onDone }) {
   };
 
   return (
-    <div className="relative">
+    <div className="">
       <InputWbtn
         type="text"
         iconify="entypo:check"
@@ -387,7 +412,7 @@ function Autocomplete({ data, onDone }) {
         required
       />
       {showSuggestions && (
-        <ul className="absolute z-50 mt-2 w-full list-none overflow-hidden rounded-lg bg-bg shadow-lg">
+        <ul className="absolute z-50 mt-2 w-52 list-none overflow-hidden rounded-lg bg-bg shadow-lg">
           {suggestions.map((suggestion, index) => (
             <li
               key={index}

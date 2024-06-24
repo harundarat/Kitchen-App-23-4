@@ -3,11 +3,6 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 require('./config/dbConfig')
-const allowedOrigins = [
-    process.env.CORS_ORIGIN_PROD,
-    process.env.CORS_ORIGIN_DEV,
-    process.env.CORS_ORIGIN_LOCAL
-];
 
 const app = express();
 const port = process.env.PORT || 3000;

@@ -11,6 +11,14 @@ import {
 } from "../context/additionalInfoContext.jsx";
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
+import "react-responsive-carousel/lib/styles/carousel.min.css"; // import stylesheet
+import { Carousel } from "react-responsive-carousel";
+import Banner1 from "../assets/banner/10.png";
+import Banner2 from "../assets/banner/11.png";
+import Banner3 from "../assets/banner/5.png";
+import Banner4 from "../assets/banner/4.png";
+import Banner5 from "../assets/banner/3.png";
+import Banner6 from "../assets/banner/2.png";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -18,8 +26,121 @@ export default function Home() {
   return (
     <main className="mx-auto my-24 w-full min-w-[360px] max-w-[1080px] px-5 py-1 lg:mx-auto lg:px-0">
       {/* Banner */}
-      <section id="banner" className="mx-auto my-6 w-full">
-        <img src={banner} alt="" />
+      <section id="banner" className="mx-auto my-6 w-full overflow-hidden">
+        {/* Mobile */}
+        <Carousel
+          showThumbs={false}
+          infiniteLoop={true}
+          useKeyboardArrows={true}
+          autoPlay={true}
+          interval={5000}
+          showStatus={false}
+          swipeable={true}
+          className="select-none md:hidden"
+        >
+          <div className="overflow-hidden rounded-lg shadow-md">
+            <img
+              className="aspect-video w-full object-cover"
+              src={Banner1}
+              alt="Image 1"
+            />
+          </div>
+          <div className="overflow-hidden rounded-lg shadow-md">
+            <img
+              className="aspect-video w-full object-cover"
+              src={Banner2}
+              alt="Image 1"
+            />
+          </div>
+          <div className="overflow-hidden rounded-lg shadow-md">
+            <img
+              className="aspect-video w-full object-cover"
+              src={Banner3}
+              alt="Image 1"
+            />
+          </div>
+          <div className="overflow-hidden rounded-lg shadow-md">
+            <img
+              className="aspect-video w-full object-cover"
+              src={Banner4}
+              alt="Image 1"
+            />
+          </div>
+          <div className="overflow-hidden rounded-lg shadow-md">
+            <img
+              className="aspect-video w-full object-cover"
+              src={Banner5}
+              alt="Image 1"
+            />
+          </div>
+          <div className="overflow-hidden rounded-lg shadow-md">
+            <img
+              className="aspect-video w-full object-cover"
+              src={Banner6}
+              alt="Image 1"
+            />
+          </div>
+        </Carousel>
+        {/* Desktop */}
+        <Carousel
+          showThumbs={false}
+          infiniteLoop={true}
+          useKeyboardArrows={true}
+          autoPlay={true}
+          interval={5000}
+          showStatus={false}
+          swipeable={true}
+          className="hidden select-none md:block"
+        >
+          <div className="hidden gap-3 md:flex">
+            <div className="flex-1 overflow-hidden rounded-lg shadow-md">
+              <img
+                className="aspect-video w-full object-cover"
+                src={Banner1}
+                alt="Image 1"
+              />
+            </div>
+            <div className="flex-1 overflow-hidden rounded-lg shadow-md">
+              <img
+                className="aspect-video w-full object-cover"
+                src={Banner2}
+                alt="Image 1"
+              />
+            </div>
+          </div>
+          <div className="hidden gap-3 md:flex">
+            <div className="flex-1 overflow-hidden rounded-lg shadow-md">
+              <img
+                className="aspect-video w-full object-cover"
+                src={Banner3}
+                alt="Image 1"
+              />
+            </div>
+            <div className="flex-1 overflow-hidden rounded-lg shadow-md">
+              <img
+                className="aspect-video w-full object-cover"
+                src={Banner4}
+                alt="Image 1"
+              />
+            </div>
+          </div>
+          <div className="hidden gap-3 md:flex">
+            <div className="flex-1 overflow-hidden rounded-lg shadow-md">
+              <img
+                className="aspect-video w-full object-cover"
+                src={Banner5}
+                alt="Image 1"
+              />
+            </div>
+            <div className="flex-1 overflow-hidden rounded-lg shadow-md">
+              <img
+                className="aspect-video w-full object-cover"
+                src={Banner6}
+                alt="Image 1"
+              />
+            </div>
+          </div>
+        </Carousel>
       </section>
 
       {/* SECTION Terpopuler */}
@@ -73,7 +194,6 @@ function PopularSection() {
   const [popular, setPopular] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // console.log(popular);
 
   useEffect(() => {
     const fetchPopular = async () => {
@@ -103,7 +223,7 @@ function PopularSection() {
 
   return (
     <div className="mx-auto mt-2 grid w-full grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4">
-      {popular.map((item, index) => (
+      {popular?.map((item, index) => (
         <Card
           key={index}
           id={item._id}
@@ -186,7 +306,6 @@ function ForYouSection() {
       try {
         setLoading(true);
         const { data } = await axios.get("/for-you");
-        console.log("🚀 ~ fetchForYou ~ data:", data);
         setForYou(data.recipes);
       } catch (error) {
         console.error(error);
@@ -217,7 +336,7 @@ function ForYouSection() {
   }
   return (
     <div className="mx-auto mt-2 grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4">
-      {forYou.map((item, index) => (
+      {forYou?.map((item, index) => (
         <Card
           key={index}
           id={item._id}

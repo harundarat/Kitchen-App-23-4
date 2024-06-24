@@ -13,6 +13,7 @@ export default function User() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState({});
   useEffect(() => {
+    window.scrollTo(0, 0);
     const fetchUser = async () => {
       try {
         setLoading(true);
@@ -39,7 +40,7 @@ export default function User() {
         />
         <div className="flex flex-col justify-center gap-2">
           <h1 className="text-xl font-bold">
-            {user.user?.fullName || "User Full Name"}
+            {user.user?.fullName || "....."}
           </h1>
           {user.user?.website && (
             <a

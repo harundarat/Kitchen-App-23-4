@@ -57,7 +57,10 @@ const recipeSchema = new Schema({
     }
 });
 
-recipeSchema.index({ title: "text", ingredients: "text" });
+recipeSchema.index(
+    { title: "text", ingredients: "text" },
+    { weights: { title: 5, ingredients: 1 } }
+);
 recipeSchema.virtual('nutrition',
     {
         ref: 'Nutrition',

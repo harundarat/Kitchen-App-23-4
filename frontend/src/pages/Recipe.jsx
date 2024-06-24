@@ -6,11 +6,13 @@ import { toast } from "react-hot-toast";
 import Card from "../components/common/Card";
 import BlankProfile from "../assets/blank_profile.webp";
 import { UserContext } from "../context/userContext";
+import { Modal, Label, Radio, Textarea } from "flowbite-react";
 
 export default function Recipe() {
   const navigate = useNavigate();
   const { isLogged } = useContext(UserContext);
   const { id } = useParams();
+  const [openModal, setOpenModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [recipe, setRecipe] = useState({});
   const [nutrition, setNutrition] = useState({});
@@ -140,6 +142,10 @@ export default function Recipe() {
             width={30}
             className="opacity-2 absolute bottom-4 right-4 opacity-50 md:bottom-8 md:right-8"
           />
+          <div className="absolute bottom-4 left-4 flex h-fit w-fit items-center gap-1 rounded-full bg-accent-2 px-3 py-1 text-xs text-bg sm:bottom-6 sm:left-6 sm:text-sm">
+            <Icon width={19} icon="mingcute:time-line" />
+            <p className="">{formatMinute(parseInt(recipe.total_time))}</p>
+          </div>
         </div>
       </section>
       <div className="mx-auto mt-5 flex max-w-[1080px] flex-col gap-8 md:flex-row">
@@ -179,21 +185,32 @@ export default function Recipe() {
               />
               <p>Bagikan</p>
             </div>
-            <div className="ml-auto flex h-fit w-fit items-center gap-1 rounded-full bg-accent-2 px-3 py-1 text-bg">
-              <Icon width={19} icon="mingcute:time-line" />
-              <p className="">{formatMinute(parseInt(recipe.total_time))}</p>
-            </div>
+
+            <button
+              onClick={() => setOpenModal(true)}
+              className="group relative ml-auto"
+            >
+              <Icon width={24} icon="material-symbols:report-outline-rounded" />
+              <p className="invisible absolute -top-5 right-1/2 translate-x-1/2 text-sm text-primary opacity-0 transition-opacity duration-300 group-hover:visible group-hover:opacity-100">
+                Laporkan
+              </p>
+            </button>
           </header>
           <hr className="my-4 border-gray-300" />
           {/* User Info */}
           <section className="flex flex-col items-start gap-2">
-            <div className="flex items-center gap-2">
+            <div
+              onClick={() => navigate(`/user/${recipe.user_id?.username}`)}
+              className="flex cursor-pointer items-center gap-2 text-accent-1 hover:underline"
+            >
               <img
                 src={recipe.user_id?.image || BlankProfile}
                 alt="user"
-                className="aspect-square w-11 rounded-full object-cover"
+                className="aspect-square w-11 rounded-full border object-cover shadow-sm"
               />
-              <p>{recipe.user_id?.fullName || "User Creator"}</p>
+              <p className="font-semibold">
+                {recipe.user_id?.fullName || "User Creator"}
+              </p>
             </div>
             <p>{recipe.description}</p>
           </section>
@@ -295,8 +312,15 @@ export default function Recipe() {
             ))}
           </section>
         </main>
+        <hr className="border-gray-300 md:invisible" />
         <MoreRecipes category={recipe.category} />
       </div>
+      <ModalReport
+        openModal={openModal}
+        setOpenModal={(bol) => setOpenModal(bol)}
+        isLogged={isLogged}
+        idRecipe={id}
+      />
     </main>
   );
 }
@@ -332,7 +356,7 @@ function MoreRecipes({ category }) {
     if (error) toast.error("Gagal mengambil data lainya");
     return (
       <section className="grid w-full grid-cols-2 gap-4 sm:grid-cols-3 md:max-w-[255px] md:grid-cols-1">
-        <h1 className="col-span-2 mt-2 w-full font-semibold sm:col-span-3 md:col-span-1">
+        <h1 className="col-span-2 w-full font-semibold sm:col-span-3 md:col-span-1">
           Resep Lainnya Untuk Kamu
         </h1>
         <Card isLoad />
@@ -364,6 +388,144 @@ function MoreRecipes({ category }) {
     </section>
   );
 }
+
+const reportValue = [
+  {
+    reason: "spam",
+    detail:
+      "Resep ini adalah spam atau berisi konten promosi yang tidak relevan.",
+    title: "Spam",
+  },
+  {
+    reason: "konten-tidak-pantas",
+    detail: "Resep ini berisi konten yang tidak pantas atau ofensif.",
+    title: "Konten Tidak Pantas",
+  },
+  {
+    reason: "informasi-salah",
+    detail: "Resep ini mengandung informasi yang salah atau menyesatkan.",
+    title: "Informasi Salah",
+  },
+  {
+    reason: "resep-tidak-lengkap",
+    detail: "Resep ini tidak lengkap atau informasi pentingnya hilang.",
+    title: "Resep Tidak Lengkap",
+  },
+  {
+    reason: "tindakan-kekerasan-atau-berbahaya",
+    detail: "Resep ini mengandung saran yang berbahaya atau tidak aman.",
+    title: "Tindakan Kekeerasan atau Berbahaya",
+  },
+  {
+    reason: "lainnya",
+    detail: "",
+    title: "Lainnya",
+  },
+];
+function ModalReport({ openModal, setOpenModal, isLogged, idRecipe }) {
+  const [report, setReport] = useState({ reason: "", detail: "" });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setReport({ reason: "", detail: "" });
+  }, [openModal]);
+
+  const handleReasonChange = (reason, detail) => {
+    setReport({ reason: reason, detail: detail });
+  };
+
+  const handleSubmit = async () => {
+    if (!report.reason) {
+      toast.error("Pilih alasan terlebih dahulu");
+      return;
+    }
+    if (report.reason === "lainnya" && !report.detail) {
+      toast.error("Jelaskan alasan anda");
+      return;
+    }
+    if (!isLogged) {
+      toast.error("Silahkan Login terlebih dahulu untuk melaporkan resep");
+      return;
+    }
+    try {
+      setLoading(true);
+      setOpenModal(false);
+      const { data } = await axios.post(`recipes/${idRecipe}/report`, {
+        reason: report.reason,
+        description: report.detail,
+      });
+      toast.success("Resep berhasil dilaporkan");
+    } catch (error) {
+      setOpenModal(true);
+      console.log(error);
+      toast.error("Gagal melaporkan resep");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      {loading && (
+        <div className="fixed left-1/2 top-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center bg-primary bg-opacity-50">
+          <div className="flex h-40 w-40 flex-col items-center justify-center gap-2 rounded bg-bg font-medium">
+            <Icon icon="svg-spinners:180-ring-with-bg" width={40} />
+            <h1>Loading...</h1>
+          </div>
+        </div>
+      )}
+      <Modal show={openModal} onClose={() => setOpenModal(false)}>
+        <Modal.Header className="mx-4 mt-3">Laporkan Resep</Modal.Header>
+        <Modal.Body className="mx-4">
+          <form className="flex max-w-md flex-col gap-4">
+            <h1 className="font-medium">
+              Pilih alasan untuk melaporkan resep ini:
+            </h1>
+            {reportValue.map((item, index) => (
+              <div className="flex items-start gap-2">
+                <Radio
+                  className="mt-1"
+                  id={item.reason}
+                  name="report_reason"
+                  value={item.reason}
+                  checked={report.reason === item.reason}
+                  onChange={() => handleReasonChange(item.reason, item.detail)}
+                />
+                <Label className="" htmlFor={item.reason}>
+                  <p className="text-[16px]">{item.title}</p>
+                  <p className="mt-2 font-normal text-gray-400">
+                    {item.detail}
+                  </p>
+                </Label>
+              </div>
+            ))}
+            {report.reason === "lainnya" && (
+              <Textarea
+                id="details"
+                name="report_details"
+                placeholder="Jika memilih 'Lainnya', mohon jelaskan"
+                value={report.detail}
+                onChange={(e) => handleReasonChange("lainnya", e.target.value)}
+              />
+            )}
+          </form>
+        </Modal.Body>
+        <Modal.Footer className="mx-4 flex justify-end gap-4">
+          <button className="" onClick={() => setOpenModal(false)}>
+            Batal
+          </button>
+          <button
+            className="h-10 rounded-full bg-primary px-4 text-bg"
+            onClick={() => handleSubmit()}
+          >
+            Kirim
+          </button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
+}
+
 function nutritionFormat(numberString) {
   if (!numberString) return "";
   let decimalIndex = numberString.indexOf(".");
@@ -375,7 +537,6 @@ function nutritionFormat(numberString) {
   }
   return result;
 }
-
 function extractYouTubeID(url) {
   const regexList = [
     /youtu\.be\/([a-zA-Z0-9_-]+)/,

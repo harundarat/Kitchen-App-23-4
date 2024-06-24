@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const { getPaginatedRecipes, getRecipeById, createRecipe, editRecipe, deleteRecipe, toggleLikeRecipe, saveRecipe } = require("../controllers/recipeController");
+const { getPaginatedRecipes, getRecipeById, createRecipe, editRecipe, deleteRecipe, toggleLikeRecipe, saveRecipe, reportRecipe } = require("../controllers/recipeController");
 const { authenticate, authCheck, verifyRecipeAuthor } = require("../middleware/auth");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -16,7 +16,7 @@ router.get("/:id", authCheck, getRecipeById);
 router.post("/", authenticate, upload.fields([{ name: "image", maxCount: 1 }, { name: "stepImages" }]), createRecipe);
 
 // Edit recipe
-router.put("/:id", authenticate, verifyRecipeAuthor, editRecipe);
+router.put("/:id", authenticate, verifyRecipeAuthor, upload.fields([{ name: "image", maxCount: 1 }, { name: "stepImages" }]), editRecipe);
 
 // Delete recipe
 router.delete("/:id", authenticate, verifyRecipeAuthor, deleteRecipe);
@@ -26,5 +26,8 @@ router.post("/:id/like", authenticate, toggleLikeRecipe);
 
 // Save or unsave recipe
 router.post("/:id/save", authenticate, saveRecipe);
+
+// Report recipe
+router.post("/:id/report", authenticate, reportRecipe);
 
 module.exports = router;

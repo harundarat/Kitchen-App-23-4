@@ -15,7 +15,7 @@ export function UserContextProvider({ children }) {
       })
       .catch((error) => {
         setIsLogged(false);
-        console.error(error.response?.data.error);
+        // console.error(error.response?.data.error);
         if (error.code === "ERR_NETWORK") {
           toast.error(error.message);
           return;

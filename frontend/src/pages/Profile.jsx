@@ -15,6 +15,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState({});
   const [activeTab, setActiveTab] = useState("recipes");
+  const [deleted, setDeleted] = useState(false);
 
   useEffect(() => {
     const tab = urlSearchParams.get("tab");
@@ -37,6 +38,7 @@ export default function Profile() {
         const response = await axios.get(`/users/${username}`);
         const data = response.data;
         setUser(data);
+        setDeleted(false);
       } catch (error) {
         console.log("🚀 ~ fetchUser ~ error:", error);
         toast.error("Error fetching user data.");
@@ -58,7 +60,7 @@ export default function Profile() {
       }
     };
     authorize();
-  }, [isLogged]);
+  }, [isLogged, deleted]);
 
   const tabHandler = (tab) => {
     urlSearchParams.set("tab", tab);
@@ -68,14 +70,14 @@ export default function Profile() {
 
   return (
     <>
-      {loading && (
+      {/* {loading && (
         <div className="fixed left-1/2 top-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center bg-primary bg-opacity-50 backdrop-blur">
           <div className="flex h-40 w-40 flex-col items-center justify-center gap-2 rounded bg-bg font-medium">
             <Icon icon="svg-spinners:180-ring-with-bg" width={40} />
             <h1>Loading...</h1>
           </div>
         </div>
-      )}
+      )} */}
       <main className="mb-24 mt-32 min-h-svh px-5 lg:px-0">
         <section className="mx-auto flex w-full max-w-[1080px] flex-col gap-4 sm:flex-row">
           <img
@@ -85,7 +87,7 @@ export default function Profile() {
           />
           <div className="flex flex-col justify-center gap-2">
             <h1 className="text-xl font-bold">
-              {user.user?.fullName || "User Full Name"}
+              {user.user?.fullName || "....."}
             </h1>
             {user.user?.website && (
               <a
@@ -132,7 +134,11 @@ export default function Profile() {
         </div>
         <section className="mx-auto mt-4 flex w-full max-w-[1080px]">
           {activeTab === "recipes" && (
-            <RecipesTab loading={loading} user={user} />
+            <RecipesTab
+              loading={loading}
+              user={user}
+              deleted={(val) => setDeleted(val)}
+            />
           )}
           {activeTab === "saved" && <SaveTab />}
           {/* {activeTab === "saved" && <RecipesTab />} */}
@@ -142,8 +148,7 @@ export default function Profile() {
   );
 }
 
-function RecipesTab({ user, loading }) {
-  console.log("🚀 ~ RecipesTab ~ user:", user);
+function RecipesTab({ user, loading, deleted }) {
   if (loading) {
     return (
       <div className="mx-auto mt-2 grid w-full grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4">
@@ -180,6 +185,8 @@ function RecipesTab({ user, loading }) {
           creatorName={user.user?.fullName || "User Full Name"}
           creatorImage={user.user?.image || ""}
           editor
+          delete
+          reload={(val) => deleted(val)}
         />
       ))}
     </div>

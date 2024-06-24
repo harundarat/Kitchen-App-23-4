@@ -317,7 +317,7 @@ function Profile() {
   return (
     <div className="flex w-fit min-w-fit cursor-pointer items-center gap-1 lg:ml-3">
       <img
-        src={profile.image ? profile.image : BlankProfile}
+        src={profile?.image ? profile.image : BlankProfile}
         alt="Profile"
         className="aspect-square w-10 rounded-full bg-slate-300 object-cover sm:w-11"
         onClick={() => setToggle(!toggle)}

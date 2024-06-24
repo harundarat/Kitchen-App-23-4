@@ -1,8 +1,10 @@
-const express = require("express"); 
+const express = require("express");
 const router = express.Router();
-const { loginAdmin, logoutAdmin } = require("../controllers/adminController");  
-const { getUserById, getUserByUsername, deleteUser, getRecipeByIdOrTitle, getAllRecipesAdmin, getRecipeById, deleteRecipeAdmin, getAdmin, getUsers } = require("../controllers/adminController");   
+const { loginAdmin, logoutAdmin, getReportedRecipes } = require("../controllers/adminController");
+const { getUserById, getUserByUsername, deleteUser, getRecipeByIdOrTitle, getAllRecipesAdmin, getRecipeById, deleteRecipeAdmin, getAdmin, getUsers } = require("../controllers/adminController");
+const { authenticate, onlyAdmin } = require("../middleware/auth");
 
+router.get("/reports", authenticate, onlyAdmin, getReportedRecipes);
 router.post("/login", loginAdmin);
 router.post("/logout", logoutAdmin);
 router.get("/users", getUsers);

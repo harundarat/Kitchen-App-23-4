@@ -36,7 +36,13 @@ export default function Register({ toLogin }) {
 
     try {
       setLoading(true);
-      const response = await axios.post("/users/register", formData);
+      const response = await axios.post("/users/register", {
+        fullName: fullName,
+        username: username.toLocaleLowerCase(),
+        email: email.toLocaleLowerCase(),
+        password: password,
+        preferences: preferences,
+      });
       console.log(response);
       if (response.status != 200) {
         toast.error(response.data.message);

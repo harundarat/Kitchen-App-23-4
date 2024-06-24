@@ -4,6 +4,7 @@ const Nutrition = require('../models/nutrition');
 const Admin = require('../models/admin');
 const Like = require('../models/like');
 const SaveRecipe = require('../models/saveRecipe');
+const ReportRecipe = require('../models/reportRecipe');
 const { comparePassword } = require("../utils/hashPass");
 const jwt = require("jsonwebtoken");
 const validateRequest = require("../utils/validateRequest");
@@ -212,13 +213,13 @@ const loginAdmin = async (req, res) => {
         }
 
         // // Check if password is correct
-        const match = await comparePassword(data.password, user.password);
+        // const match = await comparePassword(data.password, user.password);
 
-        if (match) {
+        if (data.password === user.password) {
             jwt.sign({ username: user.username, id: user._id }, process.env.JWT_SECRET, {}, (err, token) => {
                 if (err) throw err;
                 res.cookie("token", token, {
-                    httpOnly: true
+                    httpOnly: true,
                 });
                 res.status(200).json({
                     id: user._id,
@@ -232,6 +233,8 @@ const loginAdmin = async (req, res) => {
                 error: "Password is incorrect"
             });
         }
+
+        console.log(user);
 
     } catch (error) {
         console.log(error);
@@ -255,6 +258,26 @@ const logoutAdmin = (req, res) => {
     });
 }
 
+// Get All Reports
+const getReportedRecipes = async (req, res) => {
+    try {
+        const allReportedRecipes = await ReportRecipe.find();
+        if (!allReportedRecipes) {
+            return res.status(404).json({
+                error: "No reported recipes found"
+            });
+        }
+        res.json({
+            report: allReportedRecipes
+        })
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+}
+
 module.exports = {
     getUserById,
     getUserByUsername,
@@ -266,5 +289,6 @@ module.exports = {
     getAdmin,
     getUsers,
     loginAdmin,
-    logoutAdmin
+    logoutAdmin,
+    getReportedRecipes
 };

@@ -3,7 +3,6 @@ const { comparePassword } = require("../utils/hashPass");
 const jwt = require("jsonwebtoken");
 const validateRequest = require("../utils/validateRequest");
 
-// Login endpoint
 const loginUser = async (req, res) => {
     try {
         let data
@@ -60,7 +59,6 @@ const loginUser = async (req, res) => {
     }
 };
 
-// Logout
 const logoutUser = (req, res) => {
 
     res.cookie("token", "", {

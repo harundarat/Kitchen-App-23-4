@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const secret = process.env.JWT_SECRET;
 const Recipe = require("../models/recipe");
+const Admin = require("../models/admin");
 
 /**
  * Middleware function to authenticate user token.
@@ -136,9 +137,27 @@ const verifyRecipeAuthor = async (req, res, next) => {
     }
 }
 
+const onlyAdmin = async (req, res, next) => {
+    try {
+        const admin = await Admin.findById(req.user.id);
+        if (!admin) {
+            return res.status(403).json({
+                error: "You are not authorized to perform this action"
+            });
+        }
+        next();
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+}
+
 module.exports = {
     authenticate,
     authorize,
     authCheck,
-    verifyRecipeAuthor
+    verifyRecipeAuthor,
+    onlyAdmin
 };
