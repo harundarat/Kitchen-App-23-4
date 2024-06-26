@@ -21,7 +21,7 @@ import User from "./pages/User";
 import { useLocation } from "react-router-dom";
 import EditRecipe from "./pages/EditRecipe";
 
-axios.defaults.baseURL = "https://api-msib-6-kitchen-app-04.educalab.id/api";
+axios.defaults.baseURL = "https://kitchencraft-be.vercel.app/api";
 axios.defaults.withCredentials = true;
 
 function App() {
