@@ -34,4 +34,10 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use("/api", require("./routes"));
 
-app.listen(port, () => console.log(`Server is running on port ${port}`));
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(port, () => console.log(`Server is running on port ${port}`));
+}
+
+// Export for Vercel serverless
+module.exports = app;
