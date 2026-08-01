@@ -14,7 +14,7 @@ export default function RoundedButton({
 }: RoundedButtonProps) {
   const appearance = btnStroke
     ? "border-primary bg-transparent text-primary"
-    : "border-primary bg-primary text-bg hover:bg-opacity-90";
+    : "border-primary bg-primary text-bg hover:bg-primary/90";
 
   return (
     <button

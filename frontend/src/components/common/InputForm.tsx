@@ -26,7 +26,7 @@ export default function InputForm({
     >
       {label && <label htmlFor={name}>{label}</label>}
       <div
-        className={`bg-bg focus-within:ring-primary flex w-full gap-2 rounded border border-gray-500 px-3 py-2 shadow-sm ring-inset focus-within:ring-2 ${disabled ? "cursor-not-allowed" : ""}`}
+        className={`bg-bg focus-within:ring-primary flex w-full gap-2 rounded border border-gray-500 px-3 py-2 shadow-xs ring-inset focus-within:ring-2 ${disabled ? "cursor-not-allowed" : ""}`}
       >
         {prefix && <span className="text-gray-500">{prefix}</span>}
         <input
@@ -35,7 +35,7 @@ export default function InputForm({
           id={name}
           disabled={disabled}
           aria-invalid={Boolean(error)}
-          className={`w-full border-none p-0 focus:ring-0 focus:outline-none ${disabled ? "cursor-not-allowed" : ""}`}
+          className={`w-full border-none p-0 focus:ring-0 focus:outline-hidden ${disabled ? "cursor-not-allowed" : ""}`}
         />
         {postfix && <span className="text-gray-500">{postfix}</span>}
       </div>

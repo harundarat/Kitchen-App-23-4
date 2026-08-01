@@ -56,7 +56,7 @@ function ModalProfileProvider({ children }: { children: ReactNode }) {
     <ModalProfileContext.Provider value={value}>
       {children}
       <div
-        className={`bg-bg bg-opacity-30 fixed top-0 right-0 z-50 h-svh w-full cursor-default backdrop-blur-[2px] transition-all ${toggle ? "opacity-100" : "invisible opacity-0"}`}
+        className={`bg-bg/30 fixed top-0 right-0 z-50 h-svh w-full cursor-default backdrop-blur-[2px] transition-all ${toggle ? "opacity-100" : "invisible opacity-0"}`}
         onClick={() => setToggle(false)}
       >
         <div
@@ -70,7 +70,7 @@ function ModalProfileProvider({ children }: { children: ReactNode }) {
                 if (user) navigate(`/profile/${user.username}`);
                 setToggle(false);
               }}
-              className="text-primary hover:text-opacity-60 flex w-full justify-start"
+              className="text-primary hover:text-primary/60 flex w-full justify-start"
             >
               Resep
             </button>
@@ -80,24 +80,24 @@ function ModalProfileProvider({ children }: { children: ReactNode }) {
                 if (user) navigate(`/profile/${user.username}?tab=saved`);
                 setToggle(false);
               }}
-              className="text-primary hover:text-opacity-60 flex w-full justify-start"
+              className="text-primary hover:text-primary/60 flex w-full justify-start"
             >
               Disimpan
             </button>
-            <hr className="border-primary border-opacity-20 w-full border" />
+            <hr className="border-primary/20 w-full border" />
             <button
               type="button"
               onClick={() => {
                 navigate("/profile/edit");
                 setToggle(false);
               }}
-              className="text-primary hover:text-opacity-60 flex w-full justify-start"
+              className="text-primary hover:text-primary/60 flex w-full justify-start"
             >
               Pengaturan
             </button>
             <button
               type="button"
-              className="text-accent-1 hover:text-opacity-60 flex w-full justify-start"
+              className="text-accent-1 hover:text-accent-1/60 flex w-full justify-start"
               onClick={() => void logout()}
             >
               Keluar
@@ -106,7 +106,7 @@ function ModalProfileProvider({ children }: { children: ReactNode }) {
         </div>
       </div>
       {loading && (
-        <div className="bg-primary bg-opacity-50 fixed top-1/2 left-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+        <div className="bg-primary/50 fixed top-1/2 left-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center">
           <div className="bg-bg flex h-40 w-40 flex-col items-center justify-center gap-2 rounded font-medium">
             <Icon icon="svg-spinners:180-ring-with-bg" width={40} />
             <h1>Loading...</h1>

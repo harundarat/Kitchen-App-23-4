@@ -151,7 +151,7 @@ export default function Navbar() {
             className={`bg-bg absolute left-0 z-40 flex h-full w-full items-center gap-3 px-6 opacity-0 transition-opacity duration-300 sm:px-8 lg:hidden ${searchFocus ? "visible opacity-100" : "invisible"}`}
           >
             <button
-              className="bg-primary bg-opacity-30 text-bg active:bg-opacity-15 rounded-full px-3 py-1 font-medium"
+              className="bg-primary/30 text-bg active:bg-primary/15 rounded-full px-3 py-1 font-medium"
               onClick={() => setSearchFocus(false)}
             >
               Batal
@@ -442,7 +442,7 @@ function MenuBar({
         </nav>
       )}
       <div
-        className={`bg-primary bg-opacity-5 absolute top-0 -right-full h-svh w-full backdrop-blur-[2px] ${!toggled ? "hidden" : ""}`}
+        className={`bg-primary/5 absolute top-0 -right-full h-svh w-full backdrop-blur-[2px] ${!toggled ? "hidden" : ""}`}
         onClick={() => toggle(false)}
       ></div>
     </aside>

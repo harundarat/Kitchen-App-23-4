@@ -339,7 +339,7 @@ function FormRecipe({ activeTab, changeActiveTab }: TabProps) {
   return (
     <>
       {loading && (
-        <div className="bg-primary bg-opacity-50 fixed top-1/2 left-1/2 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+        <div className="bg-primary/50 fixed top-1/2 left-1/2 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center">
           <div className="bg-bg flex h-40 w-40 flex-col items-center justify-center gap-2 rounded font-medium">
             <Icon icon="svg-spinners:180-ring-with-bg" width={40} />
             <h1>Upload data...</h1>
@@ -487,7 +487,7 @@ function FormRecipe({ activeTab, changeActiveTab }: TabProps) {
               />
             </div>
             <button
-              className="bg-primary text-bg hover:bg-opacity-90 rounded px-3 py-2 transition-all active:scale-95"
+              className="bg-primary text-bg hover:bg-primary/90 rounded px-3 py-2 transition-all active:scale-95"
               onClick={addListBahan}
             >
               Tambahkan ke list bahan
@@ -582,7 +582,7 @@ function FormRecipe({ activeTab, changeActiveTab }: TabProps) {
             Selanjutnya
           </button>
           <button
-            className={`bg-accent-2 text-bg hover:bg-opacity-85 rounded border px-7 py-2 transition-all ${activeTab !== 3 ? "hidden" : ""}`}
+            className={`bg-accent-2 text-bg hover:bg-accent-2/85 rounded border px-7 py-2 transition-all ${activeTab !== 3 ? "hidden" : ""}`}
             onClick={() => handlingSimpan()}
           >
             Simpan
@@ -1077,7 +1077,7 @@ function ModalEditLangkah({
       <Modal
         show={open}
         onClose={() => onClose(false)}
-        className="bg-primary bg-opacity-50 relative"
+        className="bg-primary/50 relative"
       >
         <div className="absolute top-1/2 left-1/2 w-full max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded bg-inherit">
           <ModalHeader className="mx-auto">Edit Langkah</ModalHeader>

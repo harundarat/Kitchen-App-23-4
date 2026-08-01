@@ -44,7 +44,7 @@ export default function InputWbtn({
       className={`${className} bg-bg outline-primary flex h-10 min-w-40 items-center rounded-full outline outline-[1.5px] focus-within:outline-2 hover:outline-2`}
     >
       <input
-        className="bg-bg h-10 w-full rounded-l-full pr-1 pl-4 outline-none"
+        className="bg-bg h-10 w-full rounded-l-full pr-1 pl-4 outline-hidden"
         type={type}
         placeholder={placeholder}
         value={input}

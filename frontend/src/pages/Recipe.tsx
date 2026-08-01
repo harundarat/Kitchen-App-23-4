@@ -116,7 +116,7 @@ export default function Recipe() {
   if (loading) {
     return (
       <>
-        <div className="bg-primary bg-opacity-50 fixed top-1/2 left-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center backdrop-blur-lg">
+        <div className="bg-primary/50 fixed top-1/2 left-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center backdrop-blur-lg">
           <div className="bg-bg flex h-40 w-40 flex-col items-center justify-center gap-2 rounded font-medium">
             <Icon icon="svg-spinners:180-ring-with-bg" width={40} />
             <h1>Loading...</h1>
@@ -136,7 +136,7 @@ export default function Recipe() {
           className="aspect-[16/11] w-full bg-gray-200 object-cover md:aspect-[16/6] md:blur-[5px]"
           alt="thumbnail"
         />
-        <div className="bg-opacity-20 pointer-events-none absolute inset-0 flex items-center justify-center bg-black p-8">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20 p-8">
           <h1 className="text-bg text-xl font-bold drop-shadow sm:text-3xl">
             {recipe.title}
           </h1>
@@ -210,7 +210,7 @@ export default function Recipe() {
               <img
                 src={recipe.author.image || BlankProfile}
                 alt="user"
-                className="aspect-square w-11 rounded-full border object-cover shadow-sm"
+                className="aspect-square w-11 rounded-full border object-cover shadow-xs"
               />
               <p className="font-semibold">
                 {recipe.author.fullName || "User Creator"}
@@ -481,7 +481,7 @@ function ModalReport({
   return (
     <>
       {loading && (
-        <div className="bg-primary bg-opacity-50 fixed top-1/2 left-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+        <div className="bg-primary/50 fixed top-1/2 left-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center">
           <div className="bg-bg flex h-40 w-40 flex-col items-center justify-center gap-2 rounded font-medium">
             <Icon icon="svg-spinners:180-ring-with-bg" width={40} />
             <h1>Loading...</h1>

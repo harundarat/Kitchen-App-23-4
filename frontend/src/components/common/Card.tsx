@@ -132,7 +132,7 @@ export default function Card(props: CardProps) {
               src={props.creatorImage || BlankProfile}
               alt="Creator Image"
             />
-            <p className="text-accent-1 text-opacity-80 line-clamp-1 md:font-medium">
+            <p className="text-accent-1/80 line-clamp-1 md:font-medium">
               {props.creatorName || "Creator"}
             </p>
           </div>
@@ -187,7 +187,7 @@ function ModalAlert({
   return (
     <>
       {loading && (
-        <div className="bg-primary bg-opacity-50 fixed top-1/2 left-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+        <div className="bg-primary/50 fixed top-1/2 left-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center">
           <div className="bg-bg flex h-40 w-40 flex-col items-center justify-center gap-2 rounded font-medium">
             <Icon icon="svg-spinners:180-ring-with-bg" width={40} />
             <h1>Loading...</h1>

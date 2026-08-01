@@ -21,7 +21,7 @@ export default function TextAreaForm({
         {...props}
         name={name}
         id={name}
-        className={`bg-bg focus-within:ring-primary h-40 min-h-40 w-full rounded border border-gray-500 px-3 py-2 shadow-sm focus-within:ring-2 focus:outline-none ${className}`}
+        className={`bg-bg focus-within:ring-primary h-40 min-h-40 w-full rounded border border-gray-500 px-3 py-2 shadow-xs focus-within:ring-2 focus:outline-hidden ${className}`}
       />
     </div>
   );

@@ -347,7 +347,7 @@ function SidebarFilter() {
           >
             <SidebarItem>
               <button
-                className="bg-primary text-bg hover:bg-opacity-90 rounded-full border border-gray-300 px-4 py-2 shadow-sm active:scale-95"
+                className="bg-primary text-bg hover:bg-primary/90 rounded-full border border-gray-300 px-4 py-2 shadow-xs active:scale-95"
                 onClick={() => terapkanFilter()}
               >
                 Terapkan

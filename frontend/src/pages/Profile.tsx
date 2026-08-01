@@ -54,7 +54,7 @@ export default function Profile() {
   return (
     <>
       {/* {loading && (
-        <div className="fixed left-1/2 top-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center bg-primary bg-opacity-50 backdrop-blur">
+        <div className="fixed left-1/2 top-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center bg-primary/50 backdrop-blur">
           <div className="flex h-40 w-40 flex-col items-center justify-center gap-2 rounded bg-bg font-medium">
             <Icon icon="svg-spinners:180-ring-with-bg" width={40} />
             <h1>Loading...</h1>

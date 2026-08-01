@@ -30,11 +30,11 @@ export default function DropdownForm({
     <div className="flex flex-col gap-2">
       {label && <span>{label}</span>}
       <div
-        className={`flex w-fit items-center gap-2 rounded border border-gray-500 px-2 py-[9px] shadow-sm ${disabled ? "cursor-not-allowed" : ""}`}
+        className={`flex w-fit items-center gap-2 rounded border border-gray-500 px-2 py-[9px] shadow-xs ${disabled ? "cursor-not-allowed" : ""}`}
       >
         {prefix && <span className="text-gray-400">{prefix}</span>}
         <select
-          className={`bg-bg text-primary w-fit border-none p-0 focus:ring-0 focus:outline-none ${disabled ? "cursor-not-allowed" : ""}`}
+          className={`bg-bg text-primary w-fit border-none p-0 focus:ring-0 focus:outline-hidden ${disabled ? "cursor-not-allowed" : ""}`}
           onChange={(event) => {
             if (selected === undefined) {
               setInternalValue(event.currentTarget.value);

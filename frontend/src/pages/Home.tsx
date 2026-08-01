@@ -172,7 +172,7 @@ export default function Home() {
         <BasedOnIngredients />
         <div className="flex w-full justify-center">
           <button
-            className="text-primary hover:text-opacity-75 mx-auto mt-4 font-semibold underline transition-all active:scale-95"
+            className="text-primary hover:text-primary/75 mx-auto mt-4 font-semibold underline transition-all active:scale-95"
             onClick={() => navigate("/search")}
           >
             Lihat Bahan Lainya
