@@ -1,0 +1,54 @@
+import { Route, Routes, useLocation } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import { UserContextProvider } from "./context/userContext";
+import { AdditionalInfoProvider } from "./context/additionalInfoContext";
+
+// Pages & Components
+import Footer from "./components/layouts/Footer";
+import Navbar from "./components/layouts/Navbar";
+import Home from "./pages/Home";
+import Search from "./pages/Search";
+import Recipe from "./pages/Recipe";
+import NotFound from "./pages/NotFound";
+import EditProfile from "./pages/EditProfile";
+import Profile from "./pages/Profile";
+import InputRecipe from "./pages/InputRecipe";
+import About from "./pages/About";
+import KontakSaran from "./pages/KontakSaran";
+import Privasi from "./pages/Privasi";
+import User from "./pages/User";
+import EditRecipe from "./pages/EditRecipe";
+
+function App() {
+  const { pathname } = useLocation();
+  const showNavFoot =
+    pathname !== "/profile/edit" &&
+    pathname !== "/recipe/input" &&
+    !pathname.startsWith("/recipe/edit/");
+
+  return (
+    <UserContextProvider>
+      <AdditionalInfoProvider>
+        {showNavFoot && <Navbar />}
+        <Toaster position="top-center" toastOptions={{ duration: 1600 }} />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/recipe/:id" element={<Recipe />} />
+          <Route path="/recipe/input" element={<InputRecipe />} />
+          <Route path="/recipe/edit/:idRecipe" element={<EditRecipe />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/about/privasi" element={<Privasi />} />
+          <Route path="/about/kontak-saran" element={<KontakSaran />} />
+          <Route path="/user/:username" element={<User />} />
+          <Route path="/profile/edit" element={<EditProfile />} />
+          <Route path="/profile/:username" element={<Profile />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        {showNavFoot && <Footer />}
+      </AdditionalInfoProvider>
+    </UserContextProvider>
+  );
+}
+
+export default App;

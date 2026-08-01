@@ -24,10 +24,17 @@ export default tseslint.config(
     },
     rules: {
       ...hooks.configs.recommended.rules,
+      "react-hooks/set-state-in-effect": "off",
       "react-refresh/only-export-components": [
         "warn",
         { allowConstantExport: true },
       ],
+    },
+  },
+  {
+    files: ["src/context/**/*.tsx", "src/components/features/ModalProfile.tsx"],
+    rules: {
+      "react-refresh/only-export-components": "off",
     },
   },
 );

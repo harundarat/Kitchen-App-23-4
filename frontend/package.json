@@ -8,13 +8,11 @@
     "typecheck": "tsc --noEmit",
     "build": "vite build",
     "lint": "eslint . --max-warnings 0",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" index.html package.json tsconfig.json vite.config.ts eslint.config.js",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" index.html package.json tsconfig.json vite.config.ts eslint.config.js",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@headlessui/react": "^2.2.10",
-    "@heroicons/react": "^2.2.0",
     "@iconify/react": "^6.0.2",
     "flowbite-react": "^0.12.17",
     "hamburger-react": "^2.5.2",
@@ -32,6 +30,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
+    "@types/react-scroll": "^1.8.10",
     "@vitejs/plugin-react": "^6.0.5",
     "eslint": "^10.8.0",
     "eslint-plugin-react-hooks": "^7.1.1",

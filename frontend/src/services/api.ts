@@ -22,7 +22,9 @@ export class ApiError extends Error {
 
   constructor(status: number, payload: unknown) {
     const errorPayload = isErrorPayload(payload) ? payload : undefined;
-    super(errorPayload?.error || errorPayload?.message || `HTTP error ${status}`);
+    super(
+      errorPayload?.error || errorPayload?.message || `HTTP error ${status}`,
+    );
     this.name = "ApiError";
     this.status = status;
     this.payload = payload;
