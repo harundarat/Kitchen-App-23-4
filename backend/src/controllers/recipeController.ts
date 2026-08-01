@@ -150,7 +150,7 @@ async function saveNutrition(
   await Nutrition.findOneAndUpdate(
     { recipe: recipeId },
     { ...nutrition, recipe: recipeId },
-    { upsert: true, runValidators: true, new: true },
+    { upsert: true, runValidators: true, returnDocument: "after" },
   );
 }
 

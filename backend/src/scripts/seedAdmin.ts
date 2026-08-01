@@ -21,7 +21,7 @@ try {
       email: email.toLowerCase(),
       password: await hashPassword(password),
     },
-    { upsert: true, new: true, runValidators: true },
+    { upsert: true, returnDocument: "after", runValidators: true },
   );
   console.log(`Administrator ${admin.email} is ready`);
 } finally {
