@@ -194,6 +194,7 @@ export default function Navbar() {
                   show={openLogin}
                   size="md"
                   popup
+                  dismissible
                   onClose={() => setOpenLogin(false)}
                   className="bg-black/65 shadow"
                 >
@@ -212,6 +213,7 @@ export default function Navbar() {
                   show={openRegister}
                   size="md"
                   popup
+                  dismissible
                   onClose={() => setOpenRegister(false)}
                   className="fixed bg-black/65 shadow"
                 >
@@ -259,6 +261,7 @@ function AuthButton() {
         show={openLogin}
         size="md"
         popup
+        dismissible
         onClose={() => setOpenLogin(false)}
         className="bg-black/65 shadow"
       >
@@ -277,6 +280,7 @@ function AuthButton() {
         show={openRegister}
         size="md"
         popup
+        dismissible
         onClose={() => setOpenRegister(false)}
         className="fixed bg-black/65 shadow"
       >
