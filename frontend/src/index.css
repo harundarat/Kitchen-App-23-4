@@ -1,9 +1,19 @@
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap");
-/* @import 'flowbite'; */
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@plugin "@tailwindcss/forms";
+@plugin "flowbite/plugin";
+@source "../node_modules/flowbite";
+@source "../node_modules/flowbite-react";
+
+@theme {
+  --color-primary: #1a1f2b;
+  --color-bg: #fffefb;
+  --color-footer: #57ba280d;
+  --color-accent-1: #f21b1b;
+  --color-accent-2: #57ba28;
+  --font-Outfit: "Outfit", sans-serif;
+}
 
 html {
   font-family: "Outfit", sans-serif;
