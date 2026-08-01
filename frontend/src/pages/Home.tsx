@@ -199,6 +199,7 @@ function PopularSection() {
       } catch (error) {
         console.error(error);
         setError(error);
+        toast.error("Gagal mengambil rekomendasi resep");
       } finally {
         setLoading(false);
       }
@@ -222,7 +223,7 @@ function PopularSection() {
         <Card
           key={item._id}
           id={item._id}
-          tittle={item.title}
+          title={item.title}
           image={item.image}
           time={item.totalTime}
           likes={item.likeCount}
@@ -274,10 +275,10 @@ function CategorySection() {
       ref={ref}
     >
       <div className="flex w-full gap-3 whitespace-nowrap">
-        {kategori.map((item, index) => (
+        {kategori.map((item) => (
           <CategoryCard
             onClick={() => handleClick(item.title)}
-            key={index}
+            key={item._id ?? item.title}
             title={item.title}
             image={item.image}
           />
@@ -301,6 +302,7 @@ function ForYouSection() {
       } catch (error) {
         console.error(error);
         setError(error);
+        toast.error("Gagal mengambil rekomendasi untuk Anda");
       } finally {
         setLoading(false);
       }
@@ -310,7 +312,6 @@ function ForYouSection() {
   }, []);
 
   if (error || loading) {
-    if (error) toast.error("Gagal mengambil data 'for you'");
     return (
       <div className="mx-auto mt-2 grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4">
         {/* Taruh kodingan section 'untuk kamu' disini */}
@@ -331,7 +332,7 @@ function ForYouSection() {
         <Card
           key={item._id}
           id={item._id}
-          tittle={item.title}
+          title={item.title}
           image={item.image}
           time={item.totalTime}
           likes={item.likeCount}
@@ -343,6 +344,7 @@ function ForYouSection() {
   );
 }
 function BasedOnIngredients() {
+  const navigate = useNavigate();
   const { additionalInfo, loading } = useAdditionalInfo();
   const bahan = additionalInfo?.bahan ?? [];
 
@@ -360,8 +362,15 @@ function BasedOnIngredients() {
   return (
     <div className="mt-3 flex w-full flex-wrap justify-center gap-2">
       {/* Taruh kodingan section 'berdasarkan bahan' disini */}
-      {bahan.slice(0, 28).map((item, index) => (
-        <RoundedButton btnStroke key={index} name={item} />
+      {bahan.slice(0, 28).map((item) => (
+        <RoundedButton
+          btnStroke
+          key={item}
+          name={item}
+          onClick={() =>
+            navigate(`/search?ingredients=${encodeURIComponent(item)}&page=1`)
+          }
+        />
       ))}
     </div>
   );

@@ -18,9 +18,6 @@ const EditProfile = () => {
     email: "",
     website: "",
     bio: "",
-    sandiLama: "",
-    sandiBaru: "",
-    sandiKonfirmasi: "",
   });
   const [image, setImage] = useState<{
     file: File | null;
@@ -46,8 +43,9 @@ const EditProfile = () => {
           website: data.user.website || "",
           bio: data.user.bio || "",
         }));
-      } catch (error) {
-        console.log("🚀 ~ fetchUser ~ error", error);
+      } catch {
+        toast.error("Gagal memuat profil");
+        navigate("/", { replace: true });
       } finally {
         setLoading(false);
       }
@@ -64,30 +62,12 @@ const EditProfile = () => {
     });
   };
 
-  const validatePassword = () => {
-    const { sandiLama, sandiBaru, sandiKonfirmasi } = inputs;
-    if (sandiLama) {
-      if (!sandiBaru || !sandiKonfirmasi) {
-        toast.error("Password baru dan konfirmasi password harus diisi");
-        return false;
-      }
-      if (sandiBaru !== sandiKonfirmasi) {
-        toast.error("Password baru dan konfirmasi password tidak sama");
-        return false;
-      }
-    }
-    return true;
-  };
-
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    // validatePassword();
-    if (!validatePassword()) return;
 
     const form = new FormData();
     if (image.file) form.append("image", image.file);
     form.append("fullName", inputs.fullName);
-    form.append("username", inputs.username);
     form.append("email", inputs.email);
     if (inputs.website) form.append("website", inputs.website);
     if (inputs.bio) form.append("bio", inputs.bio);
@@ -183,9 +163,8 @@ const EditProfile = () => {
               name="username"
               placeholder="Masukan nama username"
               value={inputs.username}
-              onChange={changeHandler}
-              required
               disabled
+              required
             />
           </div>
           {/* Email */}
@@ -230,47 +209,6 @@ const EditProfile = () => {
               value={inputs.bio}
               onChange={changeHandler}
             />
-          </div>
-          <hr className="hidden border-gray-300" />
-          {/* Password */}
-          <h1 className="hidden font-medium">Ubah Password</h1>
-          <div className="hidden w-fit flex-col">
-            <label htmlFor="password">Password Lama</label>
-            <input
-              className="mt-1 w-full max-w-64 rounded-md border border-gray-500"
-              type="password"
-              id="password"
-              name="sandiLama"
-              placeholder="Masukan password lama"
-              value={inputs.sandiLama}
-              onChange={changeHandler}
-            />
-          </div>
-          <div className="hidden w-full flex-col gap-4 sm:flex-row">
-            <div className="flex w-fit flex-col">
-              <label htmlFor="sandiBaru">Password Baru</label>
-              <input
-                className="mt-1 w-full max-w-64 rounded-md border border-gray-500"
-                type="password"
-                id="sandiBaru"
-                name="sandiBaru"
-                placeholder="Masukan password baru"
-                value={inputs.sandiBaru}
-                onChange={changeHandler}
-              />
-            </div>
-            <div className="flex w-fit flex-col">
-              <label htmlFor="sandiKonfirmasi">Ulangi Password Baru</label>
-              <input
-                className="mt-1 w-full max-w-64 rounded-md border border-gray-500"
-                type="password"
-                id="sandiKonfirmasi"
-                name="sandiKonfirmasi"
-                placeholder="Ulangi password baru"
-                value={inputs.sandiKonfirmasi}
-                onChange={changeHandler}
-              />
-            </div>
           </div>
           <hr className="border-gray-300" />
           <button

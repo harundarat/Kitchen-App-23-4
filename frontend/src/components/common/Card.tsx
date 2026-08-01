@@ -11,12 +11,11 @@ export interface CardProps {
   image?: string;
   time?: string | number;
   likes?: number | string;
-  tittle?: string;
   title?: string;
   creatorImage?: string;
   creatorName?: string;
   editor?: boolean;
-  delete?: boolean;
+  deletable?: boolean;
   isLoad?: boolean;
   onClick?: () => void;
   reload?: (value: boolean) => void;
@@ -37,12 +36,11 @@ export default function Card(props: CardProps) {
   };
   const handleEditClick = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    navigate(`/recipe/edit/${props.id}`);
+    if (props.id) navigate(`/recipe/edit/${props.id}`);
   };
   const handleDelete = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     setAlertDelete(true);
-    // console.log("DELETE : ", props.id);
   };
 
   if (props.isLoad) {
@@ -68,7 +66,9 @@ export default function Card(props: CardProps) {
           {/* image recipe */}
           <img
             src={props.image}
-            alt="Recipe Image"
+            alt={props.title ? `Resep ${props.title}` : "Foto resep"}
+            loading="lazy"
+            decoding="async"
             className="absolute -z-10 aspect-square w-full rounded-lg object-cover transition duration-300 ease-in-out group-hover:scale-105"
           />
 
@@ -83,6 +83,8 @@ export default function Card(props: CardProps) {
             {props.editor === true && (
               <div>
                 <button
+                  type="button"
+                  aria-label={`Edit resep ${props.title ?? ""}`.trim()}
                   className="bg-bg text-primary flex aspect-square w-9 items-center justify-center rounded-full p-1 shadow-md transition-none hover:bg-gray-200 lg:w-10"
                   onClick={(e) => handleEditClick(e)}
                 >
@@ -94,9 +96,11 @@ export default function Card(props: CardProps) {
               </div>
             )}
             {/* delete */}
-            {props.delete === true && (
+            {props.deletable === true && (
               <div>
                 <button
+                  type="button"
+                  aria-label={`Hapus resep ${props.title ?? ""}`.trim()}
                   className="bg-accent-1 text-bg flex aspect-square w-9 items-center justify-center rounded-full p-1 shadow-md transition-opacity duration-200 group-hover:visible group-hover:opacity-100 hover:bg-red-500 lg:invisible lg:w-10 lg:opacity-0"
                   onClick={(e) => handleDelete(e)}
                 >
@@ -116,9 +120,9 @@ export default function Card(props: CardProps) {
           </div>
         </div>
         <div className="mt-2 flex w-full flex-col gap-2">
-          {/* tittle recipe */}
+          {/* recipe title */}
           <h3 className="line-clamp-2 max-w-[255px] leading-tight font-medium md:font-semibold">
-            {props.title ?? props.tittle}
+            {props.title}
           </h3>
 
           {/* creator */}
@@ -136,7 +140,7 @@ export default function Card(props: CardProps) {
       </div>
       <ModalAlert
         open={alertDelete}
-        message={`Yakin ingin menghapus "${props.title ?? props.tittle}"`}
+        message={`Yakin ingin menghapus "${props.title}"`}
         onCancel={() => setAlertDelete(false)}
         close={(val) => setAlertDelete(val)}
         recipeId={props.id}
@@ -167,7 +171,6 @@ function ModalAlert({
 
   const deleteRecipe = async () => {
     close(false);
-    setLoading(true);
     try {
       setLoading(true);
       await api.delete(`/recipes/${recipeId}`);
@@ -175,6 +178,7 @@ function ModalAlert({
       reload(true);
     } catch (error) {
       console.error(error);
+      toast.error("Gagal menghapus resep");
     } finally {
       setLoading(false);
     }

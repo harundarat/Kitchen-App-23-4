@@ -20,11 +20,12 @@ import { api } from "../../services/api";
 import type { UserProfile, UserResponse } from "../../types/api";
 
 export default function Navbar() {
-  const urlSearchParams = new URLSearchParams(useLocation().search);
+  const location = useLocation();
+  const urlSearchParams = new URLSearchParams(location.search);
   const [toggleHamburger, setToggleHamburger] = useState(false);
   const { isLogged } = useUser();
   const [searchFocus, setSearchFocus] = useState(false);
-  const showNav = window.location.pathname === "/";
+  const showNav = location.pathname === "/";
   const navigate = useNavigate();
 
   const handleSearch = (input: string) => {
@@ -35,7 +36,7 @@ export default function Navbar() {
     urlSearchParams.set("recipe", input);
     urlSearchParams.set("page", "1");
     navigate(`/search?${urlSearchParams.toString()}`);
-    setSearchFocus(!searchFocus);
+    setSearchFocus(false);
   };
 
   const [openLogin, setOpenLogin] = useState(false);
@@ -344,7 +345,7 @@ function MenuBar({
   toggle: Dispatch<SetStateAction<boolean>>;
 }) {
   const navigate = useNavigate();
-  const showNav = window.location.pathname === "/";
+  const showNav = useLocation().pathname === "/";
 
   return (
     <aside

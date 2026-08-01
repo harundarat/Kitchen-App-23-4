@@ -71,7 +71,7 @@ export default function User() {
               <Card
                 key={recipe._id}
                 id={recipe._id}
-                tittle={recipe.title}
+                title={recipe.title}
                 image={recipe.image}
                 time={recipe.totalTime}
                 likes={recipe.likeCount}

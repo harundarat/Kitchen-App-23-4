@@ -17,7 +17,7 @@ import TextAreaForm from "../components/common/TextAreaForm";
 import DropdownForm from "../components/common/DropdownForm";
 import ImageForm from "../components/common/ImageForm";
 import toast from "react-hot-toast";
-import { api } from "../services/api";
+import { api, getErrorMessage } from "../services/api";
 import type { RecipeResponse, RecipeStep } from "../types/api";
 
 interface IngredientDraft {
@@ -107,7 +107,7 @@ export default function EditRecipe() {
   const { isLogged } = useUser();
   const [tabActive, setTabActive] = useState(0);
   useEffect(() => {
-    if (isLogged == false) {
+    if (isLogged === false) {
       navigate(-1);
     }
   }, [isLogged, navigate]);
@@ -204,7 +204,6 @@ function FormRecipe({ activeTab, changeActiveTab }: TabProps) {
     step: RecipeStep[];
   } | null>(null);
 
-  // console.log("🚀 ~ FormRecipe ~ formData:", formData);
   useEffect(() => {
     (async () => {
       try {
@@ -365,8 +364,7 @@ function FormRecipe({ activeTab, changeActiveTab }: TabProps) {
       navigate(-1);
       toast.success("Resep berhasil diedit");
     } catch (error) {
-      console.log("🚀 ~ handlingSimpan ~ error:", error);
-      alertInput("Error edit data, try again later");
+      alertInput(getErrorMessage(error, "Gagal menyimpan perubahan resep"));
       return;
     } finally {
       setLoading(false);
@@ -505,7 +503,7 @@ function FormRecipe({ activeTab, changeActiveTab }: TabProps) {
                   items={unitBahan.pecahan}
                   onChange={(i) => handleInputBahan("jumlah_dec", i)}
                   selected={
-                    inputBahan.unit == "secukupnya"
+                    inputBahan.unit === "secukupnya"
                       ? "0"
                       : inputBahan.jumlah_dec
                   }
@@ -628,7 +626,7 @@ function FormRecipe({ activeTab, changeActiveTab }: TabProps) {
             Selanjutnya
           </button>
           <button
-            className={`bg-accent-2 text-bg hover:bg-opacity-85 rounded border px-7 py-2 transition-all ${activeTab != 3 ? "hidden" : ""}`}
+            className={`bg-accent-2 text-bg hover:bg-opacity-85 rounded border px-7 py-2 transition-all ${activeTab !== 3 ? "hidden" : ""}`}
             onClick={() => handlingSimpan()}
           >
             Simpan
@@ -939,7 +937,7 @@ function FormTambahan({
         <p className="text-sm text-gray-500">*Pilih setidaknya satu kategori</p>
         <div className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-4">
           {additionalInfo?.kategori.map((kat, i) => (
-            <div key={i} className="flex items-center gap-2">
+            <div key={kat._id ?? kat.title} className="flex items-center gap-2">
               <Checkbox
                 id={`kat-${i}`}
                 name={kat.title}
@@ -1062,7 +1060,7 @@ function ModalEditBahan({
                   items={unitBahan.pecahan}
                   onChange={(i) => handleInputBahan("jumlah_dec", i)}
                   selected={
-                    inputBahan.unit == "secukupnya"
+                    inputBahan.unit === "secukupnya"
                       ? "0"
                       : inputBahan.jumlah_dec
                   }
@@ -1119,7 +1117,6 @@ function ModalEditLangkah({
   langkah: StepDraft;
   onClose: (value: boolean) => void;
 }) {
-  // console.log(langkah);
   const [inputLangkah, setInputLangkah] = useState<StepDraft>(() => langkah);
 
   const handleClickImage = () => {

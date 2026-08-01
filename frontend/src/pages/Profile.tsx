@@ -27,10 +27,9 @@ export default function Profile() {
         const data = await api.get<UserResponse>(`/users/${username}`);
         setUser(data);
         setDeleted(false);
-      } catch (error) {
-        console.log("🚀 ~ fetchUser ~ error:", error);
+      } catch {
         toast.error("Error fetching user data.");
-        navigate("/user");
+        navigate(`/user/${username}`, { replace: true });
       }
     };
     const authorize = async () => {
@@ -38,9 +37,8 @@ export default function Profile() {
         setLoading(true);
         await api.get(`/auth/authorized/${username}`);
         await fetchUser();
-      } catch (error) {
-        console.log("🚀 ~ authorize ~ error:", error);
-        navigate("/profile");
+      } catch {
+        navigate(`/user/${username}`, { replace: true });
       } finally {
         setLoading(false);
       }
@@ -172,14 +170,14 @@ function RecipesTab({
         <Card
           key={item._id}
           id={item._id}
-          tittle={item.title}
+          title={item.title}
           image={item.image}
           time={item.totalTime}
           likes={item.likeCount}
           creatorName={user.user.fullName || "User Full Name"}
           creatorImage={user.user.image || ""}
           editor
-          delete
+          deletable
           reload={(val) => deleted(val)}
         />
       ))}
@@ -190,7 +188,6 @@ function RecipesTab({
 function SaveTab() {
   const { username } = useParams();
   const [savedRecipes, setSavedRecipes] = useState<Recipe[]>([]);
-  // console.log("🚀 ~ SaveTab ~ savedRecipes:", savedRecipes);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
 
@@ -205,6 +202,7 @@ function SaveTab() {
       } catch (error) {
         console.error(error);
         setError(error);
+        toast.error("Gagal mengambil resep tersimpan");
       } finally {
         setLoading(false);
       }
@@ -214,7 +212,6 @@ function SaveTab() {
   }, [username]);
 
   if (error || loading) {
-    if (error) toast.error("Gagal mengambil data 'for you'");
     return (
       <div className="mx-auto mt-2 grid w-full grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4">
         {/* Taruh kodingan section 'untuk kamu' disini */}
@@ -245,7 +242,7 @@ function SaveTab() {
         <Card
           key={item._id}
           id={item._id}
-          tittle={item.title}
+          title={item.title}
           image={item.image}
           time={item.totalTime}
           likes={item.likeCount}

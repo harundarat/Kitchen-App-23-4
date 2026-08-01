@@ -82,6 +82,7 @@ function ResultSearch() {
       } catch (error) {
         console.error(error);
         setError(error);
+        toast.error("Terjadi kesalahan saat memuat data");
       } finally {
         setLoading(false);
       }
@@ -91,9 +92,6 @@ function ResultSearch() {
   }, [location.search, urlEndpoint]);
 
   if (loading || error) {
-    if (error) {
-      toast.error("Terjadi kesalahan saat memuat data");
-    }
     return (
       <div className="mx-auto mt-2 grid w-full grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-3">
         <Card isLoad />
@@ -124,7 +122,7 @@ function ResultSearch() {
               <Card
                 key={item._id}
                 id={item._id}
-                tittle={item.title}
+                title={item.title}
                 image={item.image}
                 time={item.totalTime}
                 likes={item.likeCount}
@@ -291,8 +289,11 @@ function SidebarFilter() {
               label="Berdasarkan Kategori"
             >
               {additionalInfo?.kategori.map((kat, i) => (
-                <SidebarItem key={i} className="ml-2 justify-start">
-                  <div key={i} className="flex items-center gap-2">
+                <SidebarItem
+                  key={kat._id ?? kat.title}
+                  className="ml-2 justify-start"
+                >
+                  <div className="flex items-center gap-2">
                     <Checkbox
                       id={`kat-${i}`}
                       name={kat.title}

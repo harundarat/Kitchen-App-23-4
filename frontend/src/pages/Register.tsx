@@ -84,6 +84,7 @@ export default function Register({
               <Label htmlFor="namalengkap">Nama Lengkap</Label>
             </div>
             <TextInput
+              id="namalengkap"
               type="text"
               name="namalengkap"
               placeholder="Masukan nama lengkap"
@@ -96,11 +97,16 @@ export default function Register({
           </div>
           <div>
             <div className="mb-2 block">
-              <Label htmlFor="Name">Username</Label>
+              <Label htmlFor="username">Username</Label>
             </div>
             <TextInput
+              id="username"
+              name="username"
               type="text"
               placeholder="Username kamu"
+              minLength={3}
+              maxLength={30}
+              pattern="[a-zA-Z0-9_]+"
               value={formData.username}
               required
               onChange={(e) =>
@@ -114,6 +120,8 @@ export default function Register({
               <Label htmlFor="email">Email</Label>
             </div>
             <TextInput
+              id="email"
+              name="email"
               type="email"
               placeholder="Masukan email"
               required
@@ -129,8 +137,12 @@ export default function Register({
               <Label htmlFor="password">Password</Label>
             </div>
             <TextInput
+              id="password"
+              name="password"
               type="password"
               placeholder="Masukan password"
+              minLength={8}
+              maxLength={72}
               required
               value={formData.password}
               onChange={(e) =>
@@ -189,7 +201,7 @@ function FormTambahan({
       </h1>
       <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-2">
         {additionalInfo?.kategori.map((kat, i) => (
-          <div key={i} className="flex items-center gap-2">
+          <div key={kat._id ?? kat.title} className="flex items-center gap-2">
             <Checkbox
               id={`kat-${i}`}
               name={kat.title}

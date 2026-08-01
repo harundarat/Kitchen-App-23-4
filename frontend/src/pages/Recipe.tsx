@@ -332,11 +332,9 @@ export default function Recipe() {
 
 function MoreRecipes({ category }: { category: string[] }) {
   const categoryEncode = encodeURIComponent(category?.join(","));
-  // console.log("🚀 ~ MoreRecipes ~ categoryEncode:", categoryEncode);
   const [forYou, setForYou] = useState<RecipeData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
-  // console.log(forYou);
 
   useEffect(() => {
     const fetchForYou = async () => {
@@ -349,6 +347,7 @@ function MoreRecipes({ category }: { category: string[] }) {
       } catch (error) {
         console.error(error);
         setError(error);
+        toast.error("Gagal mengambil resep lainnya");
       } finally {
         setLoading(false);
       }
@@ -358,7 +357,6 @@ function MoreRecipes({ category }: { category: string[] }) {
   }, [categoryEncode]);
 
   if (error || loading) {
-    if (error) toast.error("Gagal mengambil data lainya");
     return (
       <section className="grid w-full grid-cols-2 gap-4 sm:grid-cols-3 md:max-w-[255px] md:grid-cols-1">
         <h1 className="col-span-2 w-full font-semibold sm:col-span-3 md:col-span-1">
@@ -382,7 +380,7 @@ function MoreRecipes({ category }: { category: string[] }) {
         <Card
           key={item._id}
           id={item._id}
-          tittle={item.title}
+          title={item.title}
           image={item.image}
           time={item.totalTime}
           likes={item.likeCount}

@@ -69,6 +69,7 @@ export async function apiRequest<T = void>(
     body,
     credentials: "include",
     headers,
+    signal: options.signal ?? AbortSignal.timeout(15_000),
   });
 
   const contentType = response.headers.get("content-type");
