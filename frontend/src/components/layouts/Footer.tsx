@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="bg-accent-2 bg-opacity-10 px-10 py-10">
+    <footer className="bg-accent-2/10 px-10 py-10">
       <div className="m-auto flex max-w-[1080px] flex-col gap-7 md:flex-row">
         <div className="flex w-full flex-col justify-start gap-4 sm:flex-row md:w-[40%] md:flex-col md:gap-4">
           <Link to="/" aria-label="Kembali ke beranda">
