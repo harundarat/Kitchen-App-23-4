@@ -1,17 +1,18 @@
-import axios from "axios";
-import data from "./addData.json"
+import data from "./addData.json";
+import { api } from "./api";
 
 const additionalInfo = async () => {
     if (!localStorage.getItem("additionalInfo")) {
         try {
-            const k = await axios.get("/category");
-            const b = await axios.get("/ingredients");
-            const additionalInfo = { kategori: k.data.category, bahan: b.data.ingredients };
+            const [k, b] = await Promise.all([
+                api.get("/category"),
+                api.get("/ingredients"),
+            ]);
+            const additionalInfo = { kategori: k.category, bahan: b.ingredients };
             localStorage.setItem("additionalInfo", JSON.stringify(additionalInfo));
             return JSON.parse(localStorage.getItem("additionalInfo"));
-        } catch (error) {
+        } catch {
             return data;
-            throw error;
         }
     } else {
         const addInfo = JSON.parse(localStorage.getItem("additionalInfo"));

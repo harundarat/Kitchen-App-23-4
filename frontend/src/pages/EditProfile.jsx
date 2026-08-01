@@ -5,7 +5,7 @@ import BlankImage from "../assets/blank_profile.webp";
 import { Icon } from "@iconify/react";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/userContext";
-import axios from "axios";
+import { api } from "../services/api";
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -28,8 +28,7 @@ const EditProfile = () => {
     const fetchUser = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get(`/users/${user.username}`);
-        console.log("🚀 ~ fetchUser ~ data:", data);
+        const data = await api.get(`/users/${user.username}`);
         setInputs({
           image: data.user?.image,
           fullName: data.user?.fullName,
@@ -81,11 +80,10 @@ const EditProfile = () => {
 
     try {
       setLoading(true);
-      const { data } = await axios.put(`/users/${user.username}`, form);
+      await api.put(`/users/${user.username}`, form);
       navigate(-1, { replace: true });
       toast.success("Berhasil menyimpan perubahan");
     } catch (error) {
-      console.log("🚀 ~ handleSubmit ~ error:", error);
       toast.error("Gagal menyimpan perubahan");
     } finally {
       setLoading(false);

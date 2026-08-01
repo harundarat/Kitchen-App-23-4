@@ -5,7 +5,7 @@ import { Icon } from "@iconify/react";
 import { useLocation, useParams } from "react-router-dom";
 import { Sidebar, Checkbox, Label, Pagination } from "flowbite-react";
 import { toast } from "react-hot-toast";
-import axios from "axios";
+import { api } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import {
   AdditionalInfoContext,
@@ -67,7 +67,7 @@ function ResultSearch() {
     const fetchSearch = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get(`/recipes?${urlEndpoint}&limit=12`);
+        const data = await api.get(`/recipes?${urlEndpoint}&limit=12`);
         setResultSearch(data);
       } catch (error) {
         console.error(error);

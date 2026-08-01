@@ -12,8 +12,8 @@ import InputForm from "../components/common/InputForm";
 import TextAreaForm from "../components/common/TextAreaForm";
 import DropdownForm from "../components/common/DropdownForm";
 import ImageForm from "../components/common/ImageForm";
-import axios from "axios";
 import toast from "react-hot-toast";
+import { api } from "../services/api";
 
 const time = {
   jam: [
@@ -129,7 +129,7 @@ function FormRecipe({ activeTab, changeActiveTab }) {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await axios.get(`/recipes/${idRecipe}`);
+        const data = await api.get(`/recipes/${idRecipe}`);
         const recipe = data?.recipe;
         setFormData({
           title: recipe.title,
@@ -293,12 +293,9 @@ function FormRecipe({ activeTab, changeActiveTab }) {
 
     try {
       setLoading(true);
-      const response = await axios.put(`/recipes/${idRecipe}`, data);
-      console.log(response);
-      if (response.status == 200) {
-        navigate(-1, { replace: true });
-        toast.success("Resep berhasil diedit");
-      }
+      await api.put(`/recipes/${idRecipe}`, data);
+      navigate(-1, { replace: true });
+      toast.success("Resep berhasil diedit");
     } catch (error) {
       console.log("🚀 ~ handlingSimpan ~ error:", error);
       setOpenAlert({

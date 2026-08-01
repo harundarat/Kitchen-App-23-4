@@ -1,4 +1,3 @@
-import axios from "axios";
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import BlankProfile from "../assets/blank_profile.webp";
@@ -6,6 +5,7 @@ import Card from "../components/common/Card";
 import { toast } from "react-hot-toast";
 import { Icon } from "@iconify/react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../services/api";
 
 export default function User() {
   const navigate = useNavigate();
@@ -17,10 +17,8 @@ export default function User() {
     const fetchUser = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`/users/${username}`);
-        const data = response.data;
+        const data = await api.get(`/users/${username}`);
         setUser(data);
-        console.log("🚀 ~ fetchUser ~ data:", data);
       } catch (error) {
         console.log("🚀 ~ fetchUser ~ error:", error);
         navigate("/user");
@@ -74,7 +72,7 @@ function UserRecipes({ username }) {
     const fetchUserRecipes = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get(`/users/${username}`);
+        const data = await api.get(`/users/${username}`);
         setUserRecipes(data.recipe);
         setUser(data.user);
       } catch (error) {

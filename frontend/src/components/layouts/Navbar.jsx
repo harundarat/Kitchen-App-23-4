@@ -15,8 +15,8 @@ import {
 } from "../features/ModalProfile";
 import Login from "../../pages/Login";
 import Register from "../../pages/Register";
-import axios from "axios";
 import { Modal, Button, Checkbox, Label, TextInput } from "flowbite-react";
+import { api } from "../../services/api";
 
 export default function Navbar() {
   const urlSearchParams = new URLSearchParams(useLocation().search);
@@ -305,10 +305,10 @@ function Profile() {
   useEffect(() => {
     const getUser = async () => {
       try {
-        const response = await axios.get(`/users/${user.username}`);
-        setProfile(response.data.user);
+        const response = await api.get(`/users/${user.username}`);
+        setProfile(response.user);
       } catch (error) {
-        console.error(error.response?.data);
+        console.error(error);
       }
     };
     getUser();

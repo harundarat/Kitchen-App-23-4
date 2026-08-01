@@ -1,9 +1,9 @@
-import axios from "axios";
 import { useState, createContext, useContext } from "react";
 import { UserContext } from "../../context/userContext";
 import { toast } from "react-hot-toast";
 import { Icon } from "@iconify/react";
 import { useNavigate } from "react-router-dom";
+import { api, getErrorMessage } from "../../services/api";
 
 const ModalProfileContext = createContext();
 
@@ -19,16 +19,11 @@ function ModalProfileProvider({ children }) {
   const logout = async () => {
     try {
       setLoading(true);
-      const logout = await axios.post("/auth/logout");
-      if (logout.status != 200) {
-        toast.error("Erorr logout");
-        return;
-      }
+      await api.post("/auth/logout");
       toast.success("Berhasil Logout");
       setIsLogged(false);
     } catch (error) {
-      console.log(error);
-      toast.error(error.response.data.error || error.message);
+      toast.error(getErrorMessage(error, "Gagal logout"));
     } finally {
       setLoading(false);
     }

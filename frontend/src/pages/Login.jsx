@@ -1,13 +1,12 @@
 import { useState, useContext } from "react";
-import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import RoundedButton from "../components/common/RoundedButton";
 import Logo from "/kitchen-craft-logo.svg";
 import { UserContext } from "../context/userContext";
 import { Button, Checkbox, Label, Modal, TextInput } from "flowbite-react";
-import "flowbite/dist/flowbite.min.css";
 import { Icon } from "@iconify/react";
+import { api, getErrorMessage } from "../services/api";
 
 export default function Login({ toRegister }) {
   const navigate = useNavigate();
@@ -26,19 +25,13 @@ export default function Login({ toRegister }) {
     }
     try {
       setLoading(true);
-      const response = await axios.post("/auth/login", formData);
-      console.log(response);
-      if (response.status != 200) {
-        toast.error(response.data.message);
-        return;
-      }
+      await api.post("/auth/login", formData);
       // setIsLogged(true);
       toast.success("Login berhasil");
       setFormData({ email: "", password: "" });
       setIsLogged(true);
     } catch (error) {
-      console.log(error);
-      toast.error(error.response.data.error || error.message);
+      toast.error(getErrorMessage(error, "Login gagal"));
     } finally {
       setLoading(false);
     }

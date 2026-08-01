@@ -3,8 +3,8 @@ import { Icon } from "@iconify/react";
 import BlankProfile from "../../assets/blank_profile.webp";
 import { useNavigate } from "react-router-dom";
 import { Modal } from "flowbite-react";
-import axios from "axios";
 import toast from "react-hot-toast";
+import { api } from "../../services/api";
 
 export default function Card(props) {
   const navigate = useNavigate();
@@ -138,14 +138,9 @@ function ModalAlert({ open, message, recipeId, onCancel, close, reload }) {
     setLoading(true);
     try {
       setLoading(true);
-      const response = await axios.delete(`/recipes/${recipeId}`);
-      if (response.status === 204) {
-        toast.success("Resep berhasil dihapus");
-        reload(true);
-        return;
-      }
-      toast.error("Gagal menghapus resep");
-      console.log(response);
+      await api.delete(`/recipes/${recipeId}`);
+      toast.success("Resep berhasil dihapus");
+      reload(true);
     } catch (error) {
       console.error(error);
     } finally {

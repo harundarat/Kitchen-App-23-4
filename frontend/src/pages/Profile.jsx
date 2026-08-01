@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { UserContext } from "../context/userContext";
-import axios from "axios";
+import { api } from "../services/api";
 import { Icon } from "@iconify/react";
 import BlankProfile from "../assets/blank_profile.webp";
 import toast from "react-hot-toast";
@@ -35,8 +35,7 @@ export default function Profile() {
     const fetchUser = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`/users/${username}`);
-        const data = response.data;
+        const data = await api.get(`/users/${username}`);
         setUser(data);
         setDeleted(false);
       } catch (error) {
@@ -48,10 +47,8 @@ export default function Profile() {
     const authorize = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`/auth/authorized/${username}`);
-        if (response.status === 200) {
-          fetchUser();
-        }
+        await api.get(`/auth/authorized/${username}`);
+        fetchUser();
       } catch (error) {
         console.log("🚀 ~ authorize ~ error:", error);
         navigate("/profile");
@@ -204,7 +201,7 @@ function SaveTab() {
     const fetchSavedRecipes = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get(`/users/${username}/saved-recipes`);
+        const data = await api.get(`/users/${username}/saved-recipes`);
         setSavedRecipes(data.recipes);
       } catch (error) {
         console.error(error);

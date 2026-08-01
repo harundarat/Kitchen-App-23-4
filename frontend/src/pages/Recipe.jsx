@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { Icon } from "@iconify/react";
 import { toast } from "react-hot-toast";
 import Card from "../components/common/Card";
 import BlankProfile from "../assets/blank_profile.webp";
 import { UserContext } from "../context/userContext";
 import { Modal, Label, Radio, Textarea } from "flowbite-react";
+import { api } from "../services/api";
 
 export default function Recipe() {
   const navigate = useNavigate();
@@ -26,12 +26,11 @@ export default function Recipe() {
     const fetchRecipe = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`/recipes/${id}`);
-        const data = response.data.recipe;
+        const response = await api.get(`/recipes/${id}`);
+        const data = response.recipe;
         setRecipe(data);
         setToggleActivity((val) => ({ ...val, like: data.isLiked }));
         setToggleActivity((val) => ({ ...val, save: data.isSaved }));
-        console.log("🚀 ~ fetchRecipe ~ response:", response);
       } catch (error) {
         navigate("/recipe");
         console.log("🚀 ~ fetchRecipe ~ error:", error);
@@ -53,7 +52,6 @@ export default function Recipe() {
       gula: nutritionFormat(nutrisi?.sugar?.g),
       garam: nutritionFormat(nutrisi?.salt?.mg),
     });
-    console.log("🚀 ~ useEffect ~ nutrisi:", nutrisi);
   }, [recipe]);
 
   const handleShare = () => {
@@ -83,8 +81,7 @@ export default function Recipe() {
     }
 
     try {
-      const response = await axios.post(`/recipes/${id}/like`);
-      console.log("🚀 ~ toggleLike ~ response:", response);
+      await api.post(`/recipes/${id}/like`);
     } catch (error) {
       toast.error("Gagal menyukai resep");
       setToggleActivity((val) => ({ ...val, like: !toggleActivity.like }));
@@ -102,8 +99,7 @@ export default function Recipe() {
     }
     setToggleActivity((val) => ({ ...val, save: !toggleActivity.save }));
     try {
-      const response = await axios.post(`/recipes/${id}/save`);
-      console.log("🚀 ~ toggleLike ~ response:", response);
+      await api.post(`/recipes/${id}/save`);
     } catch (error) {
       toast.error("Gagal menyimpan resep");
       setToggleActivity((val) => ({ ...val, save: false }));
@@ -337,7 +333,7 @@ function MoreRecipes({ category }) {
     const fetchForYou = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get(
+        const data = await api.get(
           `/recipes?category=${categoryEncode}&limit=4`,
         );
         setForYou(data.recipes);
@@ -450,14 +446,13 @@ function ModalReport({ openModal, setOpenModal, isLogged, idRecipe }) {
     try {
       setLoading(true);
       setOpenModal(false);
-      const { data } = await axios.post(`recipes/${idRecipe}/report`, {
+      await api.post(`/recipes/${idRecipe}/report`, {
         reason: report.reason,
         description: report.detail,
       });
       toast.success("Resep berhasil dilaporkan");
     } catch (error) {
       setOpenModal(true);
-      console.log(error);
       toast.error("Gagal melaporkan resep");
     } finally {
       setLoading(false);

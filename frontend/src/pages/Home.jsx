@@ -3,7 +3,7 @@ import Card from "../components/common/Card.jsx";
 import CategoryCard from "../components/common/CategoryCard.jsx";
 import banner from "../assets/banner-1.png";
 import { useDraggable } from "react-use-draggable-scroll";
-import axios from "axios";
+import { api } from "../services/api";
 import RoundedButton from "../components/common/RoundedButton.jsx";
 import {
   AdditionalInfoContext,
@@ -199,7 +199,7 @@ function PopularSection() {
     const fetchPopular = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get("/recipes?popular=true&limit=4");
+        const data = await api.get("/recipes?popular=true&limit=4");
         setPopular(data.recipes);
       } catch (error) {
         console.error(error);
@@ -305,7 +305,7 @@ function ForYouSection() {
     const fetchForYou = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get("/for-you");
+        const data = await api.get("/for-you");
         setForYou(data.recipes);
       } catch (error) {
         console.error(error);

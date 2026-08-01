@@ -1,8 +1,6 @@
-import { Routes, Route } from "react-router-dom";
-import axios from "axios";
+import { Route, Routes, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { UserContextProvider } from "./context/userContext";
-import { useEffect } from "react";
 
 // Pages & Components
 import Footer from "./components/layouts/Footer";
@@ -18,17 +16,14 @@ import About from "./pages/About";
 import KontakSaran from "./pages/KontakSaran";
 import Privasi from "./pages/Privasi";
 import User from "./pages/User";
-import { useLocation } from "react-router-dom";
 import EditRecipe from "./pages/EditRecipe";
 
-axios.defaults.baseURL = "https://kitchencraft-be.vercel.app/api";
-axios.defaults.withCredentials = true;
-
 function App() {
+  const { pathname } = useLocation();
   const showNavFoot =
-    useLocation().pathname !== "/profile/edit" &&
-    useLocation().pathname !== "/recipe/input" &&
-    !useLocation().pathname.startsWith("/recipe/edit/");
+    pathname !== "/profile/edit" &&
+    pathname !== "/recipe/input" &&
+    !pathname.startsWith("/recipe/edit/");
 
   return (
     <UserContextProvider>

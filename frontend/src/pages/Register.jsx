@@ -1,5 +1,4 @@
 import { useState, useContext, useEffect } from "react";
-import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import Logo from "/kitchen-craft-logo.svg";
@@ -10,6 +9,7 @@ import {
 } from "../context/additionalInfoContext";
 import { Icon } from "@iconify/react";
 import { Button, Checkbox, Label, Modal, TextInput } from "flowbite-react";
+import { api, getErrorMessage } from "../services/api";
 
 export default function Register({ toLogin }) {
   const [loading, setLoading] = useState(false);
@@ -36,20 +36,15 @@ export default function Register({ toLogin }) {
 
     try {
       setLoading(true);
-      const response = await axios.post("/users/register", {
+      const response = await api.post("/users/register", {
         fullName: fullName,
         username: username.toLocaleLowerCase(),
         email: email.toLocaleLowerCase(),
         password: password,
         preferences: preferences,
       });
-      console.log(response);
-      if (response.status != 200) {
-        toast.error(response.data.message);
-        return;
-      }
       toLogin ? toLogin(true) : "";
-      toast.success(response.data.message);
+      toast.success(response.message || "Pendaftaran berhasil");
       setFormData({
         fullName: "",
         username: "",
@@ -58,8 +53,7 @@ export default function Register({ toLogin }) {
         preferences: [],
       });
     } catch (error) {
-      console.log(error);
-      toast.error(error.response.data.error || error.message);
+      toast.error(getErrorMessage(error, "Pendaftaran gagal"));
     } finally {
       setLoading(false);
     }
