@@ -31,7 +31,7 @@ export default function CategoryCard(props: CategoryCardProps) {
     <div
       onMouseDown={() => (mouseDownTime.current = Date.now())}
       onMouseUp={() => mouseUpHandle()}
-      className="group bg-opacity-30 relative flex aspect-square h-fit w-full max-w-[152px] min-w-[140px] cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-black select-none lg:min-w-[152px]"
+      className="group relative flex aspect-square h-fit w-full max-w-[152px] min-w-[140px] cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-black/30 select-none lg:min-w-[152px]"
     >
       <img
         className="absolute -z-10 h-full w-full object-cover transition duration-200 group-hover:scale-105"
