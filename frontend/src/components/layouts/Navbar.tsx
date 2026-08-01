@@ -195,7 +195,7 @@ export default function Navbar() {
                   size="md"
                   popup
                   onClose={() => setOpenLogin(false)}
-                  className="bg-opacity-65 bg-black shadow"
+                  className="bg-black/65 shadow"
                 >
                   <ModalHeader />
                   <ModalBody>
@@ -213,7 +213,7 @@ export default function Navbar() {
                   size="md"
                   popup
                   onClose={() => setOpenRegister(false)}
-                  className="bg-opacity-65 fixed bg-black shadow"
+                  className="fixed bg-black/65 shadow"
                 >
                   <ModalHeader>
                     <h1 className="m-4 font-semibold">Buat Akun Baru.</h1>
@@ -260,7 +260,7 @@ function AuthButton() {
         size="md"
         popup
         onClose={() => setOpenLogin(false)}
-        className="bg-opacity-65 bg-black shadow"
+        className="bg-black/65 shadow"
       >
         <ModalHeader />
         <ModalBody>
@@ -278,7 +278,7 @@ function AuthButton() {
         size="md"
         popup
         onClose={() => setOpenRegister(false)}
-        className="bg-opacity-65 fixed bg-black shadow"
+        className="fixed bg-black/65 shadow"
       >
         <ModalHeader>
           <h1 className="m-4 font-semibold">Buat Akun Baru.</h1>
