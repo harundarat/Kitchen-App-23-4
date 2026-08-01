@@ -257,7 +257,7 @@ function SidebarFilter() {
     <>
       <Sidebar
         aria-label="sidebar-filter"
-        className="mt-4 w-full rounded-lg border border-gray-300 bg-gray-100 shadow select-none md:h-fit md:max-w-[255px]"
+        className="text-primary mt-4 w-full rounded-lg border border-gray-300 bg-gray-100 shadow select-none md:h-fit md:max-w-[255px]"
       >
         <SidebarItems>
           {/* Filter Header */}
