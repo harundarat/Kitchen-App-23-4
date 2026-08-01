@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import { Admin } from "../models/admin.js";
 import { Recipe } from "../models/recipe.js";
+import { User } from "../models/user.js";
 import { ApiError } from "../utils/apiError.js";
 import { assertObjectId, routeParam } from "../utils/validation.js";
 import { verifyToken } from "../utils/token.js";
@@ -26,8 +27,14 @@ export function authCheck(request: Request, _response: Response, next: NextFunct
   next();
 }
 
-export function authorizeUsername(request: Request, _response: Response, next: NextFunction): void {
-  if (request.user?.username !== routeParam(request, "username").toLowerCase()) {
+export async function authorizeUsername(
+  request: Request,
+  _response: Response,
+  next: NextFunction,
+): Promise<void> {
+  const user = await User.exists({ username: routeParam(request, "username").toLowerCase() });
+  if (!user) throw new ApiError(404, "User not found", "NOT_FOUND");
+  if (user._id.toString() !== request.user?.id) {
     throw new ApiError(403, "You are not authorized to perform this action", "FORBIDDEN");
   }
   next();

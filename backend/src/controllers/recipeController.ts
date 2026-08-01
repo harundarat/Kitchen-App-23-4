@@ -4,7 +4,7 @@ import type { SortOrder } from "mongoose";
 import { z } from "zod";
 
 import { Like } from "../models/like.js";
-import { Nutrition, type INutrition } from "../models/nutrition.js";
+import { Nutrition } from "../models/nutrition.js";
 import { Recipe, type IRecipe } from "../models/recipe.js";
 import { Report } from "../models/report.js";
 import { SavedRecipe } from "../models/savedRecipe.js";
@@ -217,6 +217,10 @@ export const createRecipe: RequestHandler = async (request, response) => {
 
 export const editRecipe: RequestHandler = async (request, response) => {
   const data = parseInput(updateRecipeSchema, normalizedUpdateBody(request));
+  const hasFiles = Object.values(filesByField(request)).some((files) => files.length > 0);
+  if (Object.keys(data).length === 0 && !hasFiles) {
+    throw new ApiError(400, "Please provide data to update", "EMPTY_UPDATE");
+  }
   const recipe = request.recipe!;
   const { nutrition, ...recipeData } = data;
   Object.assign(recipe, recipeData);
@@ -288,5 +292,3 @@ export const reportRecipe: RequestHandler = async (request, response) => {
   const report = await Report.create({ ...data, recipe: id, user: request.user!.id });
   response.status(201).json({ message: "Recipe has been reported", report });
 };
-
-export type NutritionInput = Omit<INutrition, "recipe" | "createdAt" | "updatedAt">;

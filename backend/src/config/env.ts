@@ -21,7 +21,7 @@ const developmentSecret = "development-only-secret-change-me-123456789";
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().max(65_535).default(3000),
-  MONGO_URI: z.string().min(1).default("mongodb://127.0.0.1:27017/kitchencraft"),
+  MONGO_URI: z.string().min(1),
   JWT_SECRET: z.string().min(32),
   JWT_EXPIRES_IN_SECONDS: z.coerce.number().int().positive().default(604_800),
   BCRYPT_ROUNDS: z.coerce.number().int().min(10).max(15).default(12),
@@ -47,6 +47,9 @@ const envSchema = z.object({
 
 const result = envSchema.safeParse({
   ...process.env,
+  MONGO_URI:
+    process.env.MONGO_URI ||
+    (nodeEnv === "production" ? undefined : "mongodb://127.0.0.1:27017/kitchencraft"),
   JWT_SECRET:
     process.env.JWT_SECRET || (nodeEnv === "production" ? undefined : developmentSecret),
 });

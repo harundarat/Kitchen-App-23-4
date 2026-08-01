@@ -58,4 +58,21 @@ describe("application shell", () => {
     assert.equal(response.body.code, "VALIDATION_ERROR");
     assert.ok(response.body.details.fieldErrors.email);
   });
+
+  it("maps malformed JSON to a client error", async () => {
+    const response = await request(app)
+      .post("/api/users/register")
+      .set("Content-Type", "application/json")
+      .send('{"email":')
+      .expect(400);
+    assert.equal(response.body.code, "INVALID_JSON");
+  });
+
+  it("rejects a tampered JWT", async () => {
+    const response = await request(app)
+      .get("/api/auth")
+      .set("Authorization", "Bearer invalid.jwt.value")
+      .expect(401);
+    assert.equal(response.body.code, "UNAUTHENTICATED");
+  });
 });

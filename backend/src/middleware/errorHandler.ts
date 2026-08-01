@@ -10,6 +10,11 @@ interface MongoServerError extends Error {
   keyValue?: Record<string, unknown>;
 }
 
+interface HttpParserError extends Error {
+  status?: number;
+  type?: string;
+}
+
 export const notFound: RequestHandler = (request, response) => {
   response.status(404).json({
     error: "Route not found",
@@ -40,6 +45,16 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, _request, resp
 
   if (error instanceof MongooseError.ValidationError) {
     response.status(400).json({ error: error.message, code: "DATABASE_VALIDATION_ERROR" });
+    return;
+  }
+
+  const httpError = error as HttpParserError;
+  if (httpError?.status === 400 || httpError?.type === "entity.parse.failed") {
+    response.status(400).json({ error: "Malformed request body", code: "INVALID_JSON" });
+    return;
+  }
+  if (httpError?.status === 413 || httpError?.type === "entity.too.large") {
+    response.status(413).json({ error: "Request body is too large", code: "PAYLOAD_TOO_LARGE" });
     return;
   }
 
