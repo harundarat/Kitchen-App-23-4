@@ -974,6 +974,7 @@ function ModalAlert({
         size="md"
         onClose={() => close(false)}
         popup
+        dismissible
         className="bg-primary flex items-center"
         position="center"
       >
@@ -1035,6 +1036,7 @@ function ModalEditBahan({
       <Modal
         show={open}
         onClose={() => onClose(false)}
+        dismissible
         className="bg-primary relative"
       >
         <div className="absolute top-1/2 left-1/2 w-full max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded bg-inherit">
@@ -1127,6 +1129,7 @@ function ModalEditLangkah({
       <Modal
         show={open}
         onClose={() => onClose(false)}
+        dismissible
         className="bg-primary/50 relative"
       >
         <div className="absolute top-1/2 left-1/2 w-full max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded bg-inherit">

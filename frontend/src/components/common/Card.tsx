@@ -199,6 +199,7 @@ function ModalAlert({
         size="md"
         onClose={() => close(false)}
         popup
+        dismissible
         className="bg-primary flex items-center"
         position="center"
       >

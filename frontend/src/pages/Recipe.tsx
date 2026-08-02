@@ -488,7 +488,7 @@ function ModalReport({
           </div>
         </div>
       )}
-      <Modal show={openModal} onClose={closeModal}>
+      <Modal show={openModal} dismissible onClose={closeModal}>
         <ModalHeader className="mx-4 mt-3">Laporkan Resep</ModalHeader>
         <ModalBody className="mx-4">
           <form className="flex max-w-md flex-col gap-4">
