@@ -6,8 +6,6 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @plugin "@tailwindcss/forms";
-@plugin "flowbite/plugin";
-@source "../node_modules/flowbite";
 
 @theme {
   --color-primary: #1a1f2b;
