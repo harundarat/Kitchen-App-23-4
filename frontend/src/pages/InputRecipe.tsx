@@ -340,7 +340,7 @@ function FormRecipe({ activeTab, changeActiveTab }: TabProps) {
     <>
       {loading && (
         <div className="bg-primary/50 fixed top-1/2 left-1/2 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center">
-          <div className="bg-bg flex h-40 w-40 flex-col items-center justify-center gap-2 rounded font-medium">
+          <div className="bg-bg flex h-40 w-40 flex-col items-center justify-center gap-2 rounded-sm font-medium">
             <Icon icon="svg-spinners:180-ring-with-bg" width={40} />
             <h1>Upload data...</h1>
           </div>
@@ -367,11 +367,11 @@ function FormRecipe({ activeTab, changeActiveTab }: TabProps) {
                 <img
                   src={selectedImage.url}
                   alt="image recipe"
-                  className="aspect-square max-w-56 rounded border bg-gray-100 object-cover"
+                  className="aspect-square max-w-56 rounded-sm border bg-gray-100 object-cover"
                 />
               ) : (
                 <div
-                  className="flex aspect-square max-w-56 cursor-pointer flex-col items-center justify-center gap-2 rounded border bg-gray-100 p-4 text-gray-400 select-none hover:border-4"
+                  className="flex aspect-square max-w-56 cursor-pointer flex-col items-center justify-center gap-2 rounded-sm border bg-gray-100 p-4 text-gray-400 select-none hover:border-4"
                   onClick={handleClickImage}
                 >
                   <Icon
@@ -487,7 +487,7 @@ function FormRecipe({ activeTab, changeActiveTab }: TabProps) {
               />
             </div>
             <button
-              className="bg-primary text-bg hover:bg-primary/90 rounded px-3 py-2 transition-all active:scale-95"
+              className="bg-primary text-bg hover:bg-primary/90 rounded-sm px-3 py-2 transition-all active:scale-95"
               onClick={addListBahan}
             >
               Tambahkan ke list bahan
@@ -502,7 +502,7 @@ function FormRecipe({ activeTab, changeActiveTab }: TabProps) {
               listBahan.map((bahan, i) => (
                 <div
                   key={i}
-                  className="flex w-full items-center justify-between gap-4 rounded border border-gray-400 px-5 py-4 shadow"
+                  className="flex w-full items-center justify-between gap-4 rounded-sm border border-gray-400 px-5 py-4 shadow-sm"
                 >
                   <h1>{ingredientToString(bahan)}</h1>
                   <div className="flex gap-4 font-medium">
@@ -563,7 +563,7 @@ function FormRecipe({ activeTab, changeActiveTab }: TabProps) {
       <hr className="mx-auto mt-8 max-w-[720px]" />
       <div className="mx-auto mt-6 flex max-w-[720px] justify-between">
         <button
-          className="text-bg rounded border bg-gray-300 px-3 py-2 transition-all hover:bg-slate-400"
+          className="text-bg rounded-sm border bg-gray-300 px-3 py-2 transition-all hover:bg-slate-400"
           onClick={() => setOpenAlert({ ...openAlert, cancel: true })}
         >
           Batal
@@ -571,18 +571,18 @@ function FormRecipe({ activeTab, changeActiveTab }: TabProps) {
         <div className="flex gap-2">
           <button
             onClick={() => changeActiveTab(activeTab - 1)}
-            className={`border-primary bg-bg text-primary hover:text-bg rounded border px-3 py-2 transition-all hover:border-slate-400 hover:bg-slate-400 ${activeTab === 0 ? "hidden" : ""}`}
+            className={`border-primary bg-bg text-primary hover:text-bg rounded-sm border px-3 py-2 transition-all hover:border-slate-400 hover:bg-slate-400 ${activeTab === 0 ? "hidden" : ""}`}
           >
             Sebelumnya
           </button>
           <button
             onClick={() => changeActiveTab(activeTab + 1)}
-            className={`bg-primary text-bg rounded border px-3 py-2 transition-all hover:bg-slate-400 ${activeTab === 3 ? "hidden" : ""}`}
+            className={`bg-primary text-bg rounded-sm border px-3 py-2 transition-all hover:bg-slate-400 ${activeTab === 3 ? "hidden" : ""}`}
           >
             Selanjutnya
           </button>
           <button
-            className={`bg-accent-2 text-bg hover:bg-accent-2/85 rounded border px-7 py-2 transition-all ${activeTab !== 3 ? "hidden" : ""}`}
+            className={`bg-accent-2 text-bg hover:bg-accent-2/85 rounded-sm border px-7 py-2 transition-all ${activeTab !== 3 ? "hidden" : ""}`}
             onClick={() => handlingSimpan()}
           >
             Simpan
@@ -726,12 +726,12 @@ function FormLangkah({
               <img
                 src={inputLangkah.image.url}
                 alt="image recipe"
-                className="aspect-square max-w-56 cursor-pointer rounded border bg-gray-100 object-cover"
+                className="aspect-square max-w-56 cursor-pointer rounded-sm border bg-gray-100 object-cover"
                 onClick={handleClickImage}
               />
             ) : (
               <div
-                className="flex aspect-square w-56 cursor-pointer flex-col items-center justify-center gap-2 rounded border bg-gray-100 p-4 text-gray-400 select-none hover:border-4"
+                className="flex aspect-square w-56 cursor-pointer flex-col items-center justify-center gap-2 rounded-sm border bg-gray-100 p-4 text-gray-400 select-none hover:border-4"
                 onClick={handleClickImage}
               >
                 <Icon
@@ -780,7 +780,7 @@ function FormLangkah({
               }
             />
             <button
-              className="bg-primary text-bg rounded px-3 py-2"
+              className="bg-primary text-bg rounded-sm px-3 py-2"
               onClick={addLangkah}
             >
               Tambahkan Langkah
@@ -798,7 +798,7 @@ function FormLangkah({
             langkah.step.map((step, i) => (
               <div
                 key={i}
-                className="flex w-full flex-col gap-4 rounded border border-gray-400 p-4 shadow"
+                className="flex w-full flex-col gap-4 rounded-sm border border-gray-400 p-4 shadow-sm"
               >
                 <div className="flex gap-4 font-medium">
                   <h1>Langkah {i + 1}</h1>
@@ -827,7 +827,7 @@ function FormLangkah({
                   {step.image.url && (
                     <img
                       src={step.image.url}
-                      className="aspect-square w-28 rounded bg-inherit object-cover"
+                      className="aspect-square w-28 rounded-sm bg-inherit object-cover"
                       alt="langkah"
                     />
                   )}
@@ -989,7 +989,7 @@ function ModalEditBahan({
         dismissible
         className="bg-primary relative"
       >
-        <div className="absolute top-1/2 left-1/2 w-full max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded bg-inherit">
+        <div className="absolute top-1/2 left-1/2 w-full max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-sm bg-inherit">
           <ModalHeader className="mx-auto">Edit Bahan</ModalHeader>
           <ModalBody className="mx-auto flex h-fit flex-col items-end p-5">
             <div className="flex w-full flex-col items-end gap-2 md:flex-row">
@@ -1082,7 +1082,7 @@ function ModalEditLangkah({
         dismissible
         className="bg-primary/50 relative"
       >
-        <div className="absolute top-1/2 left-1/2 w-full max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded bg-inherit">
+        <div className="absolute top-1/2 left-1/2 w-full max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-sm bg-inherit">
           <ModalHeader className="mx-auto">Edit Langkah</ModalHeader>
           <ModalBody className="mx-auto flex h-fit flex-col items-end p-5">
             {/*  */}
@@ -1093,12 +1093,12 @@ function ModalEditLangkah({
                     <img
                       src={inputLangkah.image.url}
                       alt="image recipe"
-                      className="aspect-square max-w-40 cursor-pointer rounded border bg-gray-100 object-cover"
+                      className="aspect-square max-w-40 cursor-pointer rounded-sm border bg-gray-100 object-cover"
                       onClick={handleClickImage}
                     />
                   ) : (
                     <div
-                      className="flex aspect-square w-40 cursor-pointer flex-col items-center justify-center gap-2 rounded border bg-gray-100 p-2 text-gray-400 select-none hover:border-4"
+                      className="flex aspect-square w-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-sm border bg-gray-100 p-2 text-gray-400 select-none hover:border-4"
                       onClick={handleClickImage}
                     >
                       <Icon

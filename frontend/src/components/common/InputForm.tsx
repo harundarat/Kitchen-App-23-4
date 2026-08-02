@@ -26,7 +26,7 @@ export default function InputForm({
     >
       {label && <label htmlFor={name}>{label}</label>}
       <div
-        className={`bg-bg focus-within:ring-primary flex w-full gap-2 rounded border border-gray-500 px-3 py-2 shadow-xs ring-inset focus-within:ring-2 ${disabled ? "cursor-not-allowed" : ""}`}
+        className={`bg-bg focus-within:ring-primary flex w-full gap-2 rounded-sm border border-gray-500 px-3 py-2 shadow-xs ring-inset focus-within:ring-2 ${disabled ? "cursor-not-allowed" : ""}`}
       >
         {prefix && <span className="text-gray-500">{prefix}</span>}
         <input

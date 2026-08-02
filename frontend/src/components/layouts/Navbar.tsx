@@ -43,7 +43,7 @@ export default function Navbar() {
   const [openRegister, setOpenRegister] = useState(false);
 
   return (
-    <header className="bg-bg fixed top-0 z-50 flex h-24 w-full items-center shadow lg:justify-center lg:px-0">
+    <header className="bg-bg fixed top-0 z-50 flex h-24 w-full items-center shadow-sm lg:justify-center lg:px-0">
       <MenuBar toggled={toggleHamburger} toggle={setToggleHamburger} />
       <div className="flex w-full min-w-[360px] items-center px-5 lg:mx-auto lg:max-w-[1080px] lg:justify-center lg:px-0">
         {/* Hamburger */}
@@ -177,7 +177,7 @@ export default function Navbar() {
               <button className="text-primary lg:hidden">
                 <Icon icon="iconamoon:profile-fill" className="text-[34px]" />
               </button>
-              <div className="bg-bg absolute right-4 hidden flex-col gap-4 rounded border p-5 shadow-md group-focus-within:flex">
+              <div className="bg-bg absolute right-4 hidden flex-col gap-4 rounded-sm border p-5 shadow-md group-focus-within:flex">
                 <RoundedButton
                   className="h-10"
                   name="Masuk"
@@ -196,7 +196,7 @@ export default function Navbar() {
                   popup
                   dismissible
                   onClose={() => setOpenLogin(false)}
-                  className="shadow"
+                  className="shadow-sm"
                 >
                   <ModalHeader />
                   <ModalBody>
@@ -215,7 +215,7 @@ export default function Navbar() {
                   popup
                   dismissible
                   onClose={() => setOpenRegister(false)}
-                  className="fixed shadow"
+                  className="fixed shadow-sm"
                 >
                   <ModalHeader>
                     <h1 className="m-4 font-semibold">Buat Akun Baru.</h1>
@@ -263,7 +263,7 @@ function AuthButton() {
         popup
         dismissible
         onClose={() => setOpenLogin(false)}
-        className="shadow"
+        className="shadow-sm"
       >
         <ModalHeader />
         <ModalBody>
@@ -282,7 +282,7 @@ function AuthButton() {
         popup
         dismissible
         onClose={() => setOpenRegister(false)}
-        className="fixed shadow"
+        className="fixed shadow-sm"
       >
         <ModalHeader>
           <h1 className="m-4 font-semibold">Buat Akun Baru.</h1>
@@ -353,7 +353,7 @@ function MenuBar({
 
   return (
     <aside
-      className={`bg-bg fixed top-0 left-0 h-svh w-0 border shadow transition-all duration-200 ${toggled ? "z-50 w-[70%]" : "invisible"}`}
+      className={`bg-bg fixed top-0 left-0 h-svh w-0 border shadow-sm transition-all duration-200 ${toggled ? "z-50 w-[70%]" : "invisible"}`}
     >
       <div
         className={`mr-5 ml-7 flex h-24 items-center justify-between lg:hidden ${!toggled ? "hidden" : ""}`}

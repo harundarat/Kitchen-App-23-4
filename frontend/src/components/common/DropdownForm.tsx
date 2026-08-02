@@ -30,7 +30,7 @@ export default function DropdownForm({
     <div className="flex flex-col gap-2">
       {label && <span>{label}</span>}
       <div
-        className={`flex w-fit items-center gap-2 rounded border border-gray-500 px-2 py-[9px] shadow-xs ${disabled ? "cursor-not-allowed" : ""}`}
+        className={`flex w-fit items-center gap-2 rounded-sm border border-gray-500 px-2 py-[9px] shadow-xs ${disabled ? "cursor-not-allowed" : ""}`}
       >
         {prefix && <span className="text-gray-400">{prefix}</span>}
         <select
@@ -46,7 +46,7 @@ export default function DropdownForm({
           required
         >
           {items.map((item) => (
-            <option className="bg-bg py-11 shadow" value={item} key={item}>
+            <option className="bg-bg py-11 shadow-sm" value={item} key={item}>
               {item}
             </option>
           ))}

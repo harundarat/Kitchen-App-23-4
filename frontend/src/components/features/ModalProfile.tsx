@@ -63,7 +63,7 @@ function ModalProfileProvider({ children }: { children: ReactNode }) {
           className="mx-auto mt-20 h-7 min-w-[360px] px-10 select-none lg:max-w-[1080px] lg:px-0"
           onClick={(event) => event.stopPropagation()}
         >
-          <div className="bg-bg ml-auto flex h-fit w-36 flex-col items-start gap-2 rounded-md border p-5 shadow">
+          <div className="bg-bg ml-auto flex h-fit w-36 flex-col items-start gap-2 rounded-md border p-5 shadow-sm">
             <button
               type="button"
               onClick={() => {
@@ -107,7 +107,7 @@ function ModalProfileProvider({ children }: { children: ReactNode }) {
       </div>
       {loading && (
         <div className="bg-primary/50 fixed top-1/2 left-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center">
-          <div className="bg-bg flex h-40 w-40 flex-col items-center justify-center gap-2 rounded font-medium">
+          <div className="bg-bg flex h-40 w-40 flex-col items-center justify-center gap-2 rounded-sm font-medium">
             <Icon icon="svg-spinners:180-ring-with-bg" width={40} />
             <h1>Loading...</h1>
           </div>

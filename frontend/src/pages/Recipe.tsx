@@ -117,7 +117,7 @@ export default function Recipe() {
     return (
       <>
         <div className="bg-primary/50 fixed top-1/2 left-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center backdrop-blur-lg">
-          <div className="bg-bg flex h-40 w-40 flex-col items-center justify-center gap-2 rounded font-medium">
+          <div className="bg-bg flex h-40 w-40 flex-col items-center justify-center gap-2 rounded-sm font-medium">
             <Icon icon="svg-spinners:180-ring-with-bg" width={40} />
             <h1>Loading...</h1>
           </div>
@@ -137,7 +137,7 @@ export default function Recipe() {
           alt="thumbnail"
         />
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20 p-8">
-          <h1 className="text-bg text-xl font-bold drop-shadow sm:text-3xl">
+          <h1 className="text-bg text-xl font-bold drop-shadow-sm sm:text-3xl">
             {recipe.title}
           </h1>
           <img
@@ -225,7 +225,7 @@ export default function Recipe() {
             {recipe.ingredients?.map((item, index) => (
               <div
                 key={index}
-                className="flex h-11 w-full max-w-[90%] items-center justify-between rounded border border-gray-300 bg-gray-100 px-4 py-2 md:max-w-[80%]"
+                className="flex h-11 w-full max-w-[90%] items-center justify-between rounded-sm border border-gray-300 bg-gray-100 px-4 py-2 md:max-w-[80%]"
               >
                 <p>{item}</p>
                 <button
@@ -248,7 +248,7 @@ export default function Recipe() {
             <>
               <section>
                 <h1 className="mb-4 font-semibold">Informasi Nilai Gizi</h1>
-                <div className="grid w-full grid-cols-2 items-start gap-4 rounded border border-gray-300 bg-gray-100 px-6 py-4 sm:grid-cols-5 lg:grid-cols-7">
+                <div className="grid w-full grid-cols-2 items-start gap-4 rounded-sm border border-gray-300 bg-gray-100 px-6 py-4 sm:grid-cols-5 lg:grid-cols-7">
                   <div className="flex flex-col items-center">
                     <h1 className="text-center">Energi Total</h1>
                     <p className="font-semibold">{nutrition?.energi} kkal</p>
@@ -309,7 +309,7 @@ export default function Recipe() {
                     <img
                       src={item.image}
                       alt="step"
-                      className="aspect-square w-32 rounded"
+                      className="aspect-square w-32 rounded-sm"
                     />
                   )}
                 </div>
@@ -482,7 +482,7 @@ function ModalReport({
     <>
       {loading && (
         <div className="bg-primary/50 fixed top-1/2 left-1/2 z-50 flex h-svh w-full -translate-x-1/2 -translate-y-1/2 items-center justify-center">
-          <div className="bg-bg flex h-40 w-40 flex-col items-center justify-center gap-2 rounded font-medium">
+          <div className="bg-bg flex h-40 w-40 flex-col items-center justify-center gap-2 rounded-sm font-medium">
             <Icon icon="svg-spinners:180-ring-with-bg" width={40} />
             <h1>Loading...</h1>
           </div>
