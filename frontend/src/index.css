@@ -1,12 +1,13 @@
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap");
 @import "tailwindcss";
+@import "flowbite-react/plugin/tailwindcss";
+@source "../.flowbite-react/class-list.json";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @plugin "@tailwindcss/forms";
 @plugin "flowbite/plugin";
 @source "../node_modules/flowbite";
-@source "../node_modules/flowbite-react";
 
 @theme {
   --color-primary: #1a1f2b;
