@@ -16,14 +16,14 @@ import {
 import Login from "../../pages/Login";
 import Register from "../../pages/Register";
 import { Modal, ModalBody, ModalHeader } from "flowbite-react";
-import { api } from "../../services/api";
+import { api, getErrorMessage } from "../../services/api";
 import type { UserProfile, UserResponse } from "../../types/api";
 
 export default function Navbar() {
   const location = useLocation();
   const urlSearchParams = new URLSearchParams(location.search);
   const [toggleHamburger, setToggleHamburger] = useState(false);
-  const { isLogged } = useUser();
+  const { isAdmin, isUser, status } = useUser();
   const [searchFocus, setSearchFocus] = useState(false);
   const showNav = location.pathname === "/";
   const navigate = useNavigate();
@@ -166,10 +166,17 @@ export default function Navbar() {
         )}
 
         {/* Profile & Auth Button */}
-        {isLogged ? (
+        {status === "loading" ? (
+          <div
+            className="bg-primary/10 ml-3 hidden h-10 w-20 animate-pulse rounded-full lg:block"
+            aria-label="Memuat sesi"
+          />
+        ) : isUser ? (
           <ModalProfileProvider>
             <Profile />
           </ModalProfileProvider>
+        ) : isAdmin ? (
+          <AdminSessionActions />
         ) : (
           <>
             <AuthButton />
@@ -303,11 +310,11 @@ function AuthButton() {
 
 function Profile() {
   const { toggle, setToggle } = useModalProfile();
-  const { user, isLogged } = useUser();
+  const { isUser, user } = useUser();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   useEffect(() => {
     const getUser = async () => {
-      if (!user) return;
+      if (!isUser || !user) return;
       try {
         const response = await api.get<UserResponse>(`/users/${user.username}`);
         setProfile(response.user);
@@ -316,7 +323,7 @@ function Profile() {
       }
     };
     void getUser();
-  }, [isLogged, user]);
+  }, [isUser, user]);
 
   return (
     <div className="flex w-fit min-w-fit cursor-pointer items-center gap-1 lg:ml-3">
@@ -337,6 +344,44 @@ function Profile() {
           <Icon icon="mingcute:down-fill" />
         )}
       </div>
+    </div>
+  );
+}
+
+function AdminSessionActions() {
+  const navigate = useNavigate();
+  const { logout } = useUser();
+  const [loading, setLoading] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      setLoading(true);
+      await logout();
+      toast.success("Berhasil logout dari admin");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Gagal logout"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="ml-3 flex items-center gap-2 sm:ml-6">
+      <button
+        type="button"
+        className="bg-primary text-bg rounded-full px-3 py-2 text-sm font-medium"
+        onClick={() => navigate("/admin/users")}
+      >
+        Dasbor admin
+      </button>
+      <button
+        type="button"
+        className="text-accent-1 border-accent-1/30 hidden rounded-full border px-3 py-2 text-sm font-medium sm:inline-flex"
+        onClick={() => void handleLogout()}
+        disabled={loading}
+      >
+        {loading ? "Keluar..." : "Keluar"}
+      </button>
     </div>
   );
 }

@@ -1028,14 +1028,14 @@ exit gate passes.
 
 ### Routing and shell
 
-- [ ] Consumer, editor, login, and admin layouts are explicit nested routes.
-- [ ] Admin routes are lazy-loaded and protected.
-- [ ] Deep-link return works after login.
-- [ ] Admin login warns before replacing a user session.
-- [ ] Admin shell is responsive and accessible.
-- [ ] Public navbar/profile is role-aware.
-- [ ] Consumer-only UI actions reject/hide for admin sessions.
-- [ ] Phase 3 gate passes.
+- [x] Consumer, editor, login, and admin layouts are explicit nested routes.
+- [x] Admin routes are lazy-loaded and protected.
+- [x] Deep-link return works after login.
+- [x] Admin login warns before replacing a user session.
+- [x] Admin shell is responsive and accessible.
+- [x] Public navbar/profile is role-aware.
+- [x] Consumer-only UI actions reject/hide for admin sessions.
+- [x] Phase 3 gate passes.
 
 ### User administration
 
@@ -1095,6 +1095,8 @@ changing the plan.
 | 2026-08-13 | Phase 2 introduced `requireActivePrincipal` for session refresh plus role-specific `onlyUser`/`onlyAdmin` checks. | Supertest covers stale principals, cross-role access, and protected legacy admin endpoints without MongoDB. | Cookie JWT signatures alone no longer retain access after the referenced account is deleted. |
 | 2026-08-13 | Phase 2 added `PUT /api/admin/user/:id` with the shared username, name, and email constraints. | Contract tests cover validation, unknown/empty updates, missing users, duplicate keys, normalization, and password exclusion. | Old user-edit behavior is restored against a safe current API contract. |
 | 2026-08-13 | Phase 2 made the existing session provider role-aware and added a typed `adminService`. | Frontend tests cover anonymous/user/admin/error refresh states, role-aware logout, and no web-storage token. | Admin pages can use the shared API client with abortable reads and normalized recipe details. |
+| 2026-08-13 | Phase 3 replaced pathname chrome checks with consumer/editor/admin nested layouts. | Route tests cover loading, role redirects, deep links, login failure, logout, and admin navigation state. | Navbar/footer logic has no admin pathname exception; `AdditionalInfoProvider` is limited to consumer layouts. |
+| 2026-08-13 | Phase 3 shell uses existing Flowbite Sidebar/Drawer primitives with Iconify navigation. | Responsive controls have labels and `aria-expanded`; navigation uses `NavLink` URL state. | The shell shares the existing theme and frontend tokens while remaining independently navigable on mobile and desktop. |
 | YYYY-MM-DD | _Add new discovery/decision_                                     | _Evidence_                                            | _Plan effect_                                                                         |
 
 ## 13. Completion criteria

@@ -19,7 +19,7 @@ import type { Recipe as RecipeData, RecipeResponse } from "../types/api";
 
 export default function Recipe() {
   const navigate = useNavigate();
-  const { isLogged } = useUser();
+  const { isUser } = useUser();
   const { id } = useParams();
   const [openModal, setOpenModal] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -53,7 +53,7 @@ export default function Recipe() {
       }
     };
     void fetchRecipe();
-  }, [id, isLogged, navigate]);
+  }, [id, isUser, navigate]);
 
   const nutrition = useMemo(() => {
     const data = recipe?.nutrition;
@@ -83,7 +83,7 @@ export default function Recipe() {
       });
   };
   const toggleLike = async () => {
-    if (!isLogged) {
+    if (!isUser) {
       toast.error("Silahkan login terlebih dahulu untuk menyukai resep");
       return;
     }
@@ -100,7 +100,7 @@ export default function Recipe() {
     }
   };
   const toggleSave = async () => {
-    if (!isLogged) {
+    if (!isUser) {
       toast.error("Silahkan login terlebih dahulu untuk menyimpan resep");
       return;
     }
@@ -156,28 +156,32 @@ export default function Recipe() {
         <main className="w-full min-w-[70%]">
           {/* Like, Save, Share, Total Time */}
           <header className="flex items-center gap-8">
-            <div
-              onClick={() => toggleLike()}
-              className="group flex w-fit cursor-pointer flex-col items-center justify-center font-medium select-none"
-            >
-              <Icon
-                icon={`${toggleActivity.like ? "icon-park-solid:like" : "icon-park-outline:like"}`}
-                width={23}
-                className="transition-all group-active:scale-125"
-              />
-              <p>{recipe.likeCount}</p>
-            </div>
-            <div
-              onClick={() => toggleSave()}
-              className="group flex w-fit cursor-pointer flex-col items-center justify-center font-medium"
-            >
-              <Icon
-                icon={`${toggleActivity.save ? "majesticons:bookmark" : "majesticons:bookmark-line"}`}
-                width={23}
-                className="transition-all group-active:scale-125"
-              />
-              <p>Simpan</p>
-            </div>
+            {isUser && (
+              <>
+                <div
+                  onClick={() => toggleLike()}
+                  className="group flex w-fit cursor-pointer flex-col items-center justify-center font-medium select-none"
+                >
+                  <Icon
+                    icon={`${toggleActivity.like ? "icon-park-solid:like" : "icon-park-outline:like"}`}
+                    width={23}
+                    className="transition-all group-active:scale-125"
+                  />
+                  <p>{recipe.likeCount}</p>
+                </div>
+                <div
+                  onClick={() => toggleSave()}
+                  className="group flex w-fit cursor-pointer flex-col items-center justify-center font-medium"
+                >
+                  <Icon
+                    icon={`${toggleActivity.save ? "majesticons:bookmark" : "majesticons:bookmark-line"}`}
+                    width={23}
+                    className="transition-all group-active:scale-125"
+                  />
+                  <p>Simpan</p>
+                </div>
+              </>
+            )}
             <div
               onClick={() => handleShare()}
               className="group flex w-fit cursor-pointer flex-col items-center justify-center font-medium"
@@ -190,15 +194,20 @@ export default function Recipe() {
               <p>Bagikan</p>
             </div>
 
-            <button
-              onClick={() => setOpenModal(true)}
-              className="group relative ml-auto"
-            >
-              <Icon width={24} icon="material-symbols:report-outline-rounded" />
-              <p className="text-primary invisible absolute -top-5 right-1/2 translate-x-1/2 text-sm opacity-0 transition-opacity duration-300 group-hover:visible group-hover:opacity-100">
-                Laporkan
-              </p>
-            </button>
+            {isUser && (
+              <button
+                onClick={() => setOpenModal(true)}
+                className="group relative ml-auto"
+              >
+                <Icon
+                  width={24}
+                  icon="material-symbols:report-outline-rounded"
+                />
+                <p className="text-primary invisible absolute -top-5 right-1/2 translate-x-1/2 text-sm opacity-0 transition-opacity duration-300 group-hover:visible group-hover:opacity-100">
+                  Laporkan
+                </p>
+              </button>
+            )}
           </header>
           <hr className="my-4 border-gray-300" />
           {/* User Info */}
@@ -320,12 +329,13 @@ export default function Recipe() {
         <hr className="border-gray-300 md:invisible" />
         <MoreRecipes category={recipe.categories} />
       </div>
-      <ModalReport
-        openModal={openModal}
-        setOpenModal={(bol) => setOpenModal(bol)}
-        isLogged={isLogged}
-        idRecipe={id!}
-      />
+      {isUser && (
+        <ModalReport
+          openModal={openModal}
+          setOpenModal={(bol) => setOpenModal(bol)}
+          idRecipe={id!}
+        />
+      )}
     </main>
   );
 }
@@ -428,12 +438,10 @@ const reportValue = [
 function ModalReport({
   openModal,
   setOpenModal,
-  isLogged,
   idRecipe,
 }: {
   openModal: boolean;
   setOpenModal: (value: boolean) => void;
-  isLogged: boolean | null;
   idRecipe: string;
 }) {
   const [report, setReport] = useState({ reason: "", detail: "" });
@@ -455,10 +463,6 @@ function ModalReport({
     }
     if (report.reason === "lainnya" && !report.detail) {
       toast.error("Jelaskan alasan anda");
-      return;
-    }
-    if (!isLogged) {
-      toast.error("Silahkan Login terlebih dahulu untuk melaporkan resep");
       return;
     }
     try {

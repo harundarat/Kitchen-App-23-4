@@ -103,13 +103,13 @@ function ingredientToString(ingredient: IngredientDraft): string {
 
 export default function InputRecipe() {
   const navigate = useNavigate();
-  const { isLogged } = useUser();
+  const { isUser, status } = useUser();
   const [tabActive, setTabActive] = useState(0);
   useEffect(() => {
-    if (isLogged === false) {
+    if (status !== "loading" && !isUser) {
       navigate(-1);
     }
-  }, [isLogged, navigate]);
+  }, [isUser, navigate, status]);
 
   return (
     <main className="px-5 pb-10">
