@@ -4,6 +4,7 @@ import BlankProfile from "../../assets/blank_profile.webp";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { api } from "../../services/api";
+import { USER_SESSION_VALIDATION } from "../../services/sessionRecovery";
 import ConfirmDialog from "./ConfirmDialog";
 
 export interface CardProps {
@@ -54,7 +55,9 @@ export default function Card(props: CardProps) {
     deletionInFlight.current = true;
     setDeleting(true);
     try {
-      await api.delete(`/recipes/${props.id}`);
+      await api.delete(`/recipes/${props.id}`, {
+        sessionValidation: USER_SESSION_VALIDATION,
+      });
       setAlertDelete(false);
       toast.success("Resep berhasil dihapus");
       props.reload?.(true);

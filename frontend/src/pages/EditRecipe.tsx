@@ -18,6 +18,7 @@ import DropdownForm from "../components/common/DropdownForm";
 import ImageForm from "../components/common/ImageForm";
 import toast from "react-hot-toast";
 import { api, getErrorMessage } from "../services/api";
+import { USER_SESSION_VALIDATION } from "../services/sessionRecovery";
 import type { RecipeResponse, RecipeStep } from "../types/api";
 
 interface IngredientDraft {
@@ -360,7 +361,9 @@ function FormRecipe({ activeTab, changeActiveTab }: TabProps) {
 
     try {
       setLoading(true);
-      await api.put(`/recipes/${idRecipe}`, data);
+      await api.put(`/recipes/${idRecipe}`, data, {
+        sessionValidation: USER_SESSION_VALIDATION,
+      });
       navigate(-1);
       toast.success("Resep berhasil diedit");
     } catch (error) {

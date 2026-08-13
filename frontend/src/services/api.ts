@@ -1,3 +1,8 @@
+import {
+  reportSessionInvalidation,
+  type SessionValidation,
+} from "./sessionRecovery";
+
 const DEFAULT_API_URL = "https://kitchencraft-be.vercel.app/api";
 
 const API_URL = (import.meta.env.VITE_BASE_URL || DEFAULT_API_URL).replace(
@@ -9,6 +14,7 @@ type RequestBody = BodyInit | object;
 
 interface ApiRequestOptions extends Omit<RequestInit, "body"> {
   body?: RequestBody;
+  sessionValidation?: SessionValidation;
 }
 
 interface ErrorPayload {
@@ -78,6 +84,7 @@ export async function apiRequest<T = void>(
   endpoint: string,
   options: ApiRequestOptions = {},
 ): Promise<T> {
+  const { sessionValidation, ...requestOptions } = options;
   const headers = new Headers(options.headers);
   headers.set("Accept", "application/json");
 
@@ -94,7 +101,7 @@ export async function apiRequest<T = void>(
 
   try {
     const response = await fetch(`${API_URL}/${endpoint.replace(/^\//, "")}`, {
-      ...options,
+      ...requestOptions,
       body,
       credentials: "include",
       headers,
@@ -110,6 +117,10 @@ export async function apiRequest<T = void>(
           : await response.text();
 
     if (!response.ok) {
+      const invalidStatuses = sessionValidation?.invalidStatuses ?? [401, 403];
+      if (sessionValidation && invalidStatuses.includes(response.status)) {
+        reportSessionInvalidation(sessionValidation.role);
+      }
       throw new ApiError(response.status, payload);
     }
 
@@ -122,12 +133,18 @@ export async function apiRequest<T = void>(
 export const api = {
   get: <T>(endpoint: string, options?: ApiRequestOptions) =>
     apiRequest<T>(endpoint, { ...options, method: "GET" }),
-  post: <T = void>(endpoint: string, body?: RequestBody) =>
-    apiRequest<T>(endpoint, { body, method: "POST" }),
-  put: <T = void>(endpoint: string, body?: RequestBody) =>
-    apiRequest<T>(endpoint, { body, method: "PUT" }),
-  delete: <T = void>(endpoint: string) =>
-    apiRequest<T>(endpoint, { method: "DELETE" }),
+  post: <T = void>(
+    endpoint: string,
+    body?: RequestBody,
+    options?: ApiRequestOptions,
+  ) => apiRequest<T>(endpoint, { ...options, body, method: "POST" }),
+  put: <T = void>(
+    endpoint: string,
+    body?: RequestBody,
+    options?: ApiRequestOptions,
+  ) => apiRequest<T>(endpoint, { ...options, body, method: "PUT" }),
+  delete: <T = void>(endpoint: string, options?: ApiRequestOptions) =>
+    apiRequest<T>(endpoint, { ...options, method: "DELETE" }),
 };
 
 export function getErrorMessage(error: unknown, fallback: string): string {

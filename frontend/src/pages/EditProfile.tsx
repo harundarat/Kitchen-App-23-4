@@ -6,6 +6,7 @@ import { Icon } from "@iconify/react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/userContext";
 import { api } from "../services/api";
+import { CURRENT_USER_SESSION_VALIDATION } from "../services/sessionRecovery";
 import type { UserResponse } from "../types/api";
 
 const EditProfile = () => {
@@ -33,7 +34,9 @@ const EditProfile = () => {
       }
       try {
         setLoading(true);
-        const data = await api.get<UserResponse>(`/users/${user.username}`);
+        const data = await api.get<UserResponse>(`/users/${user.username}`, {
+          sessionValidation: CURRENT_USER_SESSION_VALIDATION,
+        });
         setInputs((current) => ({
           ...current,
           image: data.user.image || "",
@@ -75,7 +78,9 @@ const EditProfile = () => {
     if (!user) return;
     try {
       setLoading(true);
-      await api.put(`/users/${user.username}`, form);
+      await api.put(`/users/${user.username}`, form, {
+        sessionValidation: CURRENT_USER_SESSION_VALIDATION,
+      });
       navigate(-1);
       toast.success("Berhasil menyimpan perubahan");
     } catch {

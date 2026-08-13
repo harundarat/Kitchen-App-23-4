@@ -21,11 +21,12 @@ import {
   Textarea,
 } from "flowbite-react";
 import { api } from "../services/api";
+import { USER_SESSION_VALIDATION } from "../services/sessionRecovery";
 import type { Recipe as RecipeData, RecipeResponse } from "../types/api";
 
 export default function Recipe() {
   const navigate = useNavigate();
-  const { isUser } = useUser();
+  const { isAdmin, isUser } = useUser();
   const { id } = useParams();
   const [openModal, setOpenModal] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -96,6 +97,8 @@ export default function Recipe() {
     try {
       const result = await api.post<{ liked: boolean; likeCount: number }>(
         `/recipes/${id}/like`,
+        undefined,
+        { sessionValidation: USER_SESSION_VALIDATION },
       );
       setToggleActivity((current) => ({ ...current, like: result.liked }));
       setRecipe((current) =>
@@ -111,7 +114,11 @@ export default function Recipe() {
       return;
     }
     try {
-      const result = await api.post<{ saved: boolean }>(`/recipes/${id}/save`);
+      const result = await api.post<{ saved: boolean }>(
+        `/recipes/${id}/save`,
+        undefined,
+        { sessionValidation: USER_SESSION_VALIDATION },
+      );
       setToggleActivity((current) => ({ ...current, save: result.saved }));
     } catch {
       toast.error("Gagal menyimpan resep");
@@ -143,7 +150,7 @@ export default function Recipe() {
         <main className="w-full min-w-[70%]">
           {/* Like, Save, Share, Total Time */}
           <header className="flex items-center gap-8">
-            {isUser && (
+            {!isAdmin && (
               <>
                 <div
                   onClick={() => toggleLike()}
@@ -181,7 +188,7 @@ export default function Recipe() {
               <p>Bagikan</p>
             </div>
 
-            {isUser && (
+            {!isAdmin && (
               <button
                 type="button"
                 aria-label="Laporkan resep"
@@ -249,10 +256,11 @@ export default function Recipe() {
         <hr className="border-gray-300 md:invisible" />
         <MoreRecipes category={recipe.categories} />
       </div>
-      {isUser && (
+      {!isAdmin && (
         <ModalReport
           openModal={openModal}
           setOpenModal={(bol) => setOpenModal(bol)}
+          isUser={isUser}
           idRecipe={id!}
         />
       )}
@@ -358,10 +366,12 @@ const reportValue = [
 function ModalReport({
   openModal,
   setOpenModal,
+  isUser,
   idRecipe,
 }: {
   openModal: boolean;
   setOpenModal: (value: boolean) => void;
+  isUser: boolean;
   idRecipe: string;
 }) {
   const [report, setReport] = useState({ reason: "", detail: "" });
@@ -385,13 +395,23 @@ function ModalReport({
       toast.error("Jelaskan alasan anda");
       return;
     }
+    if (!isUser) {
+      toast.error("Silahkan Login terlebih dahulu untuk melaporkan resep");
+      return;
+    }
     try {
       setLoading(true);
       setOpenModal(false);
-      await api.post(`/recipes/${idRecipe}/report`, {
-        reason: report.reason,
-        description: report.detail,
-      });
+      await api.post(
+        `/recipes/${idRecipe}/report`,
+        {
+          reason: report.reason,
+          description: report.detail,
+        },
+        {
+          sessionValidation: USER_SESSION_VALIDATION,
+        },
+      );
       setReport({ reason: "", detail: "" });
       toast.success("Resep berhasil dilaporkan");
     } catch {

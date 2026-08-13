@@ -1,4 +1,5 @@
-import { ApiError, api } from "./api";
+import { api } from "./api";
+import { ADMIN_SESSION_VALIDATION } from "./sessionRecovery";
 import type {
   AdminLoginInput,
   AdminLoginResponse,
@@ -14,33 +15,6 @@ interface DeleteResponse {
   message: string;
 }
 
-type AuthorizationFailureListener = () => void;
-
-const authorizationFailureListeners = new Set<AuthorizationFailureListener>();
-
-export function subscribeToAdminAuthorizationFailures(
-  listener: AuthorizationFailureListener,
-): () => void {
-  authorizationFailureListeners.add(listener);
-  return () => {
-    authorizationFailureListeners.delete(listener);
-  };
-}
-
-async function protectedAdminRequest<T>(request: () => Promise<T>): Promise<T> {
-  try {
-    return await request();
-  } catch (error) {
-    if (
-      error instanceof ApiError &&
-      (error.status === 401 || error.status === 403)
-    ) {
-      authorizationFailureListeners.forEach((listener) => listener());
-    }
-    throw error;
-  }
-}
-
 export const adminService = {
   login: (credentials: AdminLoginInput) =>
     api.post<AdminLoginResponse>("/admin/login", credentials),
@@ -48,36 +22,40 @@ export const adminService = {
   logout: () => api.post<DeleteResponse>("/admin/logout"),
 
   getUsers: (signal?: AbortSignal) =>
-    protectedAdminRequest(() =>
-      api.get<AdminManagedUser[]>("/admin/users", { signal }),
-    ),
+    api.get<AdminManagedUser[]>("/admin/users", {
+      signal,
+      sessionValidation: ADMIN_SESSION_VALIDATION,
+    }),
 
   getUser: (id: string, signal?: AbortSignal) =>
-    protectedAdminRequest(() =>
-      api.get<AdminManagedUser>(`/admin/user/${id}`, { signal }),
-    ),
+    api.get<AdminManagedUser>(`/admin/user/${id}`, {
+      signal,
+      sessionValidation: ADMIN_SESSION_VALIDATION,
+    }),
 
   updateUser: (id: string, input: AdminUserUpdateInput) =>
-    protectedAdminRequest(() =>
-      api.put<AdminUserUpdateResponse>(`/admin/user/${id}`, input),
-    ),
+    api.put<AdminUserUpdateResponse>(`/admin/user/${id}`, input, {
+      sessionValidation: ADMIN_SESSION_VALIDATION,
+    }),
 
   deleteUser: (id: string) =>
-    protectedAdminRequest(() =>
-      api.delete<DeleteResponse>(`/admin/user/${id}`),
-    ),
+    api.delete<DeleteResponse>(`/admin/user/${id}`, {
+      sessionValidation: ADMIN_SESSION_VALIDATION,
+    }),
 
   getRecipes: (signal?: AbortSignal) =>
-    protectedAdminRequest(() =>
-      api.get<AdminRecipe[]>("/admin/recipes", { signal }),
-    ),
+    api.get<AdminRecipe[]>("/admin/recipes", {
+      signal,
+      sessionValidation: ADMIN_SESSION_VALIDATION,
+    }),
 
   async getRecipe(
     id: string,
     signal?: AbortSignal,
   ): Promise<AdminRecipeDetail> {
-    const { recipe, nutrition } = await protectedAdminRequest(() =>
-      api.get<AdminRecipeDetailResponse>(`/admin/recipe/${id}`, { signal }),
+    const { recipe, nutrition } = await api.get<AdminRecipeDetailResponse>(
+      `/admin/recipe/${id}`,
+      { signal, sessionValidation: ADMIN_SESSION_VALIDATION },
     );
     return { ...recipe, nutrition: nutrition ?? null };
   },

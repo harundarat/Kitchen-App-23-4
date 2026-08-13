@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useUser } from "../context/userContext";
 import { api } from "../services/api";
+import {
+  CURRENT_USER_SESSION_VALIDATION,
+  USER_SESSION_VALIDATION,
+} from "../services/sessionRecovery";
 import { Icon } from "@iconify/react";
 import BlankProfile from "../assets/blank_profile.webp";
 import toast from "react-hot-toast";
@@ -12,19 +16,25 @@ export default function Profile() {
   const location = useLocation();
   const urlSearchParams = new URLSearchParams(location.search);
   const navigate = useNavigate();
-  const { isLogged } = useUser();
+  const { isLogged, user: sessionUser } = useUser();
   const { username } = useParams();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<UserResponse | null>(null);
   const [deleted, setDeleted] = useState(false);
   const activeTab =
     urlSearchParams.get("tab") === "saved" ? "saved" : "recipes";
+  const profileSessionValidation =
+    username === sessionUser?.username
+      ? CURRENT_USER_SESSION_VALIDATION
+      : USER_SESSION_VALIDATION;
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         setLoading(true);
-        const data = await api.get<UserResponse>(`/users/${username}`);
+        const data = await api.get<UserResponse>(`/users/${username}`, {
+          sessionValidation: profileSessionValidation,
+        });
         setUser(data);
         setDeleted(false);
       } catch {
@@ -35,7 +45,9 @@ export default function Profile() {
     const authorize = async () => {
       try {
         setLoading(true);
-        await api.get(`/auth/authorized/${username}`);
+        await api.get(`/auth/authorized/${username}`, {
+          sessionValidation: profileSessionValidation,
+        });
         await fetchUser();
       } catch {
         navigate(`/user/${username}`, { replace: true });
@@ -44,7 +56,7 @@ export default function Profile() {
       }
     };
     void authorize();
-  }, [deleted, isLogged, navigate, username]);
+  }, [deleted, isLogged, navigate, profileSessionValidation, username]);
 
   const tabHandler = (tab: "recipes" | "saved") => {
     urlSearchParams.set("tab", tab);
@@ -197,6 +209,7 @@ function SaveTab() {
         setLoading(true);
         const data = await api.get<{ recipes: Recipe[] }>(
           `/users/${username}/saved-recipes`,
+          { sessionValidation: USER_SESSION_VALIDATION },
         );
         setSavedRecipes(data.recipes);
       } catch (error) {

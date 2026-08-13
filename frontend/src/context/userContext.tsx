@@ -10,7 +10,7 @@ import {
 } from "react";
 import { toast } from "react-hot-toast";
 import { ApiError, api, getErrorMessage } from "../services/api";
-import { subscribeToAdminAuthorizationFailures } from "../services/admin";
+import { subscribeToSessionInvalidations } from "../services/sessionRecovery";
 import type { SessionUser } from "../types/api";
 
 const SESSION_ERROR_TOAST_ID = "session-refresh-error";
@@ -46,7 +46,7 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [status, setStatus] = useState<SessionStatus>("loading");
   const [sessionError, setSessionError] = useState<Error | null>(null);
-  const adminRecoveryPending = useRef(false);
+  const sessionRecoveryPending = useRef(false);
 
   const refreshSession = useCallback(async (signal?: AbortSignal) => {
     if (signal?.aborted) return { user: null, error: null };
@@ -86,15 +86,15 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (status !== "authenticated" || user?.role !== "admin") return;
-    return subscribeToAdminAuthorizationFailures(() => {
-      if (adminRecoveryPending.current) return;
-      adminRecoveryPending.current = true;
+    if (status !== "authenticated" || !user) return;
+    return subscribeToSessionInvalidations(user.role, () => {
+      if (sessionRecoveryPending.current) return;
+      sessionRecoveryPending.current = true;
       void refreshSession().finally(() => {
-        adminRecoveryPending.current = false;
+        sessionRecoveryPending.current = false;
       });
     });
-  }, [refreshSession, status, user?.role]);
+  }, [refreshSession, status, user]);
 
   useEffect(() => {
     const controller = new AbortController();

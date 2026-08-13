@@ -49,7 +49,9 @@ describe("consumer recipe deletion", () => {
     await user.click(confirm);
 
     expect(mocks.deleteRecipe).toHaveBeenCalledOnce();
-    expect(mocks.deleteRecipe).toHaveBeenCalledWith("/recipes/recipe-1");
+    expect(mocks.deleteRecipe).toHaveBeenCalledWith("/recipes/recipe-1", {
+      sessionValidation: { role: "user" },
+    });
     expect(screen.getByRole("button", { name: "Menghapus..." })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Batal" })).toBeDisabled();
 

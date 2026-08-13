@@ -3,15 +3,22 @@ import userEvent from "@testing-library/user-event";
 import { toast } from "react-hot-toast";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { RequireAdmin } from "../components/layouts/RequireRole";
+import { RequireAdmin, RequireUser } from "../components/layouts/RequireRole";
 import { UserContextProvider, useUser } from "../context/userContext";
-import { apiRequest } from "../services/api";
+import { api, apiRequest } from "../services/api";
 import { adminService } from "../services/admin";
+import {
+  CURRENT_USER_SESSION_VALIDATION,
+  USER_SESSION_VALIDATION,
+} from "../services/sessionRecovery";
 
-function sessionResponse(role: "user" | "admin" = "user"): Response {
+function sessionResponse(
+  role: "user" | "admin" = "user",
+  username = "koki",
+): Response {
   return new Response(
     JSON.stringify({
-      user: { id: "user-1", username: "koki", role },
+      user: { id: "user-1", username, role },
     }),
     { headers: { "Content-Type": "application/json" } },
   );
@@ -57,6 +64,34 @@ function SessionProbe() {
       >
         Muat data admin
       </button>
+      <button
+        type="button"
+        onClick={() =>
+          void api
+            .get("/users/koki", {
+              sessionValidation: CURRENT_USER_SESSION_VALIDATION,
+            })
+            .catch(() => undefined)
+        }
+      >
+        Muat principal pengguna
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          void api
+            .post(
+              "/recipes",
+              {},
+              {
+                sessionValidation: USER_SESSION_VALIDATION,
+              },
+            )
+            .catch(() => undefined)
+        }
+      >
+        Kirim permintaan pengguna
+      </button>
     </>
   );
 }
@@ -68,6 +103,27 @@ function ProtectedAdminProbe() {
       onClick={() => void adminService.getUsers().catch(() => undefined)}
     >
       Muat halaman admin
+    </button>
+  );
+}
+
+function ProtectedUserProbe() {
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        void api
+          .post(
+            "/recipes",
+            {},
+            {
+              sessionValidation: USER_SESSION_VALIDATION,
+            },
+          )
+          .catch(() => undefined)
+      }
+    >
+      Muat halaman pengguna
     </button>
   );
 }
@@ -269,6 +325,140 @@ describe("UserContextProvider", () => {
       screen.getByText("Sesi untuk koki: administrator"),
     ).toBeInTheDocument();
     expect(screen.getByText("Admin: true")).toBeInTheDocument();
+  });
+
+  it("hydrates a replacement admin session after a consumer authorization failure", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse(),
+      new Response(JSON.stringify({ error: "User access required" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      }),
+      sessionResponse("admin", "pengelola"),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const user = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <SessionProbe />
+      </UserContextProvider>,
+    );
+
+    await screen.findByText("Sesi untuk koki: pengguna");
+    await user.click(
+      screen.getByRole("button", { name: "Kirim permintaan pengguna" }),
+    );
+
+    expect(
+      await screen.findByText("Sesi untuk pengelola: administrator"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Admin: true")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("hydrates a renamed consumer after the old principal lookup returns 404", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse(),
+      new Response(JSON.stringify({ error: "User not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      }),
+      sessionResponse("user", "koki-baru"),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const user = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <SessionProbe />
+      </UserContextProvider>,
+    );
+
+    await screen.findByText("Sesi untuk koki: pengguna");
+    await user.click(
+      screen.getByRole("button", { name: "Muat principal pengguna" }),
+    );
+
+    expect(
+      await screen.findByText("Sesi untuk koki-baru: pengguna"),
+    ).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("leaves a protected consumer route after the backend rejects a deleted principal", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse(),
+      new Response(JSON.stringify({ error: "User access required" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      }),
+      new Response(JSON.stringify({ error: "Authentication required" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const user = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <MemoryRouter initialEntries={["/profile/koki"]}>
+          <Routes>
+            <Route element={<RequireUser />}>
+              <Route path="/profile/koki" element={<ProtectedUserProbe />} />
+            </Route>
+            <Route path="/" element={<p>Beranda konsumen</p>} />
+          </Routes>
+        </MemoryRouter>
+      </UserContextProvider>,
+    );
+
+    await user.click(
+      await screen.findByRole("button", { name: "Muat halaman pengguna" }),
+    );
+
+    expect(await screen.findByText("Beranda konsumen")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      expect.stringMatching(/\/api\/auth$/),
+      expect.objectContaining({ credentials: "include", method: "GET" }),
+    );
+  });
+
+  it("does not refresh shared session state for unrelated consumer failures", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse(),
+      new Response(JSON.stringify({ error: "Gateway unavailable" }), {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const user = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <SessionProbe />
+      </UserContextProvider>,
+    );
+
+    await screen.findByText("Sesi untuk koki: pengguna");
+    await user.click(
+      screen.getByRole("button", { name: "Kirim permintaan pengguna" }),
+    );
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    expect(screen.getByText("Sesi untuk koki: pengguna")).toBeInTheDocument();
+    expect(screen.getByText("Admin: false")).toBeInTheDocument();
   });
 
   it("maps an unauthorized refresh to an anonymous session", async () => {

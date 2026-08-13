@@ -17,6 +17,7 @@ import Login from "../../pages/Login";
 import Register from "../../pages/Register";
 import { Modal, ModalBody, ModalHeader } from "flowbite-react";
 import { api, getErrorMessage } from "../../services/api";
+import { CURRENT_USER_SESSION_VALIDATION } from "../../services/sessionRecovery";
 import type { UserProfile, UserResponse } from "../../types/api";
 
 export default function Navbar() {
@@ -316,7 +317,10 @@ function Profile() {
     const getUser = async () => {
       if (!isUser || !user) return;
       try {
-        const response = await api.get<UserResponse>(`/users/${user.username}`);
+        const response = await api.get<UserResponse>(
+          `/users/${user.username}`,
+          { sessionValidation: CURRENT_USER_SESSION_VALIDATION },
+        );
         setProfile(response.user);
       } catch (error) {
         console.error(error);
