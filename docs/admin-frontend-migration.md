@@ -1016,9 +1016,9 @@ exit gate passes.
 
 ### Test and contract foundation
 
-- [ ] Vitest and React Testing Library configured.
-- [ ] Existing frontend render/session behavior covered.
-- [ ] Transitive frontend audit finding resolved without dependency downgrade.
+- [x] Vitest and React Testing Library configured.
+- [x] Existing frontend render/session behavior covered.
+- [x] Transitive frontend audit finding resolved without dependency downgrade.
 - [ ] Active-principal validation implemented.
 - [ ] `onlyUser` applied to consumer-only backend operations.
 - [ ] Protected admin user-update endpoint implemented and tested.
@@ -1090,6 +1090,8 @@ changing the plan.
 | 2026-08-13 | Local `.env` creation/modification is authorized for acceptance. | Explicit user authorization.                          | Back up and restore existing files; use isolated database/configuration.              |
 | 2026-08-13 | Frontend has one transitive high audit finding.                  | `npm audit`; `nanoid@3.3.16` under PostCSS.           | Resolve through a compatible lockfile update in Phase 1.                              |
 | 2026-08-13 | Phase 0 baseline rerun on `migrate/admin-into-frontend` at `1c6eba3`; worktree was clean. | `npm ci` plus all specified checks in each independent project. | Frontend typecheck/lint/format/temp build, backend check/temp build, and legacy-admin temp build passed. |
+| 2026-08-13 | Phase 1 added Vitest 4 with React Testing Library in a dedicated `vitest.config.ts`. | The Flowbite Vite plugin keeps file handles open when loaded by Vitest. | Production Vite config remains unchanged; tests use React plugin, jsdom, jest-dom, and a minimal `matchMedia` shim. |
+| 2026-08-13 | Phase 1 resolved the transitive high-severity audit finding to `nanoid@3.3.18`. | `npm audit --audit-level=high` reports no vulnerabilities after the compatible lockfile-only resolution. | No direct runtime dependency or frontend-stack downgrade was introduced. |
 | YYYY-MM-DD | _Add new discovery/decision_                                     | _Evidence_                                            | _Plan effect_                                                                         |
 
 ## 13. Completion criteria
