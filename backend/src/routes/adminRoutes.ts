@@ -13,6 +13,7 @@ import {
   getUsers,
   loginAdmin,
   logoutAdmin,
+  updateUser,
 } from "../controllers/adminController.js";
 import { authenticate, onlyAdmin } from "../middleware/auth.js";
 
@@ -25,6 +26,7 @@ adminRouter.get("/reports", getReportedRecipes);
 adminRouter.get("/users", getUsers);
 adminRouter.get("/user/username/:username", getUserByUsername);
 adminRouter.get("/user/:id", getUserById);
+adminRouter.put("/user/:id", updateUser);
 adminRouter.delete("/user/:id", deleteUser);
 adminRouter.get("/recipes", getAllRecipesAdmin);
 adminRouter.get("/recipe", getRecipeByIdOrTitle);

@@ -11,7 +11,7 @@ import {
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/userContext";
-import { api, getErrorMessage } from "../../services/api";
+import { getErrorMessage } from "../../services/api";
 
 interface ModalProfileContextValue {
   toggle: boolean;
@@ -33,17 +33,15 @@ export function useModalProfile(): ModalProfileContextValue {
 function ModalProfileProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [toggle, setToggle] = useState(false);
-  const { setIsLogged, setUser, user } = useUser();
+  const { logout, user } = useUser();
   const [loading, setLoading] = useState(false);
   const value = useMemo(() => ({ toggle, setToggle }), [toggle]);
 
-  const logout = async () => {
+  const handleLogout = async () => {
     try {
       setLoading(true);
-      await api.post("/auth/logout");
+      await logout();
       toast.success("Berhasil Logout");
-      setIsLogged(false);
-      setUser(null);
       setToggle(false);
     } catch (error) {
       toast.error(getErrorMessage(error, "Gagal logout"));
@@ -98,7 +96,7 @@ function ModalProfileProvider({ children }: { children: ReactNode }) {
             <button
               type="button"
               className="text-accent-1 hover:text-accent-1/60 flex w-full justify-start"
-              onClick={() => void logout()}
+              onClick={() => void handleLogout()}
             >
               Keluar
             </button>

@@ -1019,12 +1019,12 @@ exit gate passes.
 - [x] Vitest and React Testing Library configured.
 - [x] Existing frontend render/session behavior covered.
 - [x] Transitive frontend audit finding resolved without dependency downgrade.
-- [ ] Active-principal validation implemented.
-- [ ] `onlyUser` applied to consumer-only backend operations.
-- [ ] Protected admin user-update endpoint implemented and tested.
-- [ ] Shared session context is role-aware.
-- [ ] Typed admin DTOs/service implemented using the existing API client.
-- [ ] Phase 1 and Phase 2 gates pass.
+- [x] Active-principal validation implemented.
+- [x] `onlyUser` applied to consumer-only backend operations.
+- [x] Protected admin user-update endpoint implemented and tested.
+- [x] Shared session context is role-aware.
+- [x] Typed admin DTOs/service implemented using the existing API client.
+- [x] Phase 1 and Phase 2 gates pass.
 
 ### Routing and shell
 
@@ -1092,6 +1092,9 @@ changing the plan.
 | 2026-08-13 | Phase 0 baseline rerun on `migrate/admin-into-frontend` at `1c6eba3`; worktree was clean. | `npm ci` plus all specified checks in each independent project. | Frontend typecheck/lint/format/temp build, backend check/temp build, and legacy-admin temp build passed. |
 | 2026-08-13 | Phase 1 added Vitest 4 with React Testing Library in a dedicated `vitest.config.ts`. | The Flowbite Vite plugin keeps file handles open when loaded by Vitest. | Production Vite config remains unchanged; tests use React plugin, jsdom, jest-dom, and a minimal `matchMedia` shim. |
 | 2026-08-13 | Phase 1 resolved the transitive high-severity audit finding to `nanoid@3.3.18`. | `npm audit --audit-level=high` reports no vulnerabilities after the compatible lockfile-only resolution. | No direct runtime dependency or frontend-stack downgrade was introduced. |
+| 2026-08-13 | Phase 2 introduced `requireActivePrincipal` for session refresh plus role-specific `onlyUser`/`onlyAdmin` checks. | Supertest covers stale principals, cross-role access, and protected legacy admin endpoints without MongoDB. | Cookie JWT signatures alone no longer retain access after the referenced account is deleted. |
+| 2026-08-13 | Phase 2 added `PUT /api/admin/user/:id` with the shared username, name, and email constraints. | Contract tests cover validation, unknown/empty updates, missing users, duplicate keys, normalization, and password exclusion. | Old user-edit behavior is restored against a safe current API contract. |
+| 2026-08-13 | Phase 2 made the existing session provider role-aware and added a typed `adminService`. | Frontend tests cover anonymous/user/admin/error refresh states, role-aware logout, and no web-storage token. | Admin pages can use the shared API client with abortable reads and normalized recipe details. |
 | YYYY-MM-DD | _Add new discovery/decision_                                     | _Evidence_                                            | _Plan effect_                                                                         |
 
 ## 13. Completion criteria

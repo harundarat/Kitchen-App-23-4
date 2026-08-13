@@ -85,3 +85,56 @@ export interface UserResponse {
 export interface RecipeResponse {
   recipe: Recipe;
 }
+
+export interface AdminLoginInput {
+  email: string;
+  password: string;
+}
+
+export interface AdminLoginResponse {
+  id: string;
+  username: string;
+  token: string;
+}
+
+export interface AdminManagedUser {
+  _id: string;
+  username: string;
+  fullName: string;
+  email: string;
+  image?: string;
+}
+
+export interface AdminUserUpdateInput {
+  username?: string;
+  fullName?: string;
+  email?: string;
+}
+
+export interface AdminUserUpdateResponse {
+  message: string;
+  user: AdminManagedUser;
+}
+
+export interface AdminRecipe {
+  _id: string;
+  author?: Pick<UserProfile, "username" | "fullName" | "image"> | string;
+  title: string;
+  image?: string;
+  description?: string;
+  totalTime?: string;
+  video?: string;
+  ingredients?: string[];
+  steps?: RecipeStep[];
+  categories?: string[];
+  likeCount?: number;
+}
+
+export interface AdminRecipeDetail extends AdminRecipe {
+  nutrition: Nutrition | null;
+}
+
+export interface AdminRecipeDetailResponse {
+  recipe: AdminRecipe;
+  nutrition?: Nutrition | null;
+}

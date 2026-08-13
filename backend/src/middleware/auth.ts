@@ -1,8 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
+import { isValidObjectId } from "mongoose";
 
 import { Admin } from "../models/admin.js";
 import { Recipe } from "../models/recipe.js";
 import { User } from "../models/user.js";
+import type { AuthUser } from "../types/express.js";
 import { ApiError } from "../utils/apiError.js";
 import { assertObjectId, routeParam } from "../utils/validation.js";
 import { verifyToken } from "../utils/token.js";
@@ -40,6 +42,23 @@ export async function authorizeUsername(
   next();
 }
 
+async function activePrincipalExists(user: AuthUser): Promise<boolean> {
+  if (!isValidObjectId(user.id)) return false;
+  const model = user.role === "admin" ? Admin : User;
+  return Boolean(await model.exists({ _id: user.id }));
+}
+
+export async function requireActivePrincipal(
+  request: Request,
+  _response: Response,
+  next: NextFunction,
+): Promise<void> {
+  if (!request.user || !(await activePrincipalExists(request.user))) {
+    throw new ApiError(401, "Authentication required", "UNAUTHENTICATED");
+  }
+  next();
+}
+
 export async function verifyRecipeAuthor(
   request: Request,
   _response: Response,
@@ -65,7 +84,23 @@ export async function onlyAdmin(
     throw new ApiError(403, "Administrator access required", "FORBIDDEN");
   }
 
-  const adminExists = await Admin.exists({ _id: request.user.id });
-  if (!adminExists) throw new ApiError(403, "Administrator access required", "FORBIDDEN");
+  if (!(await activePrincipalExists(request.user))) {
+    throw new ApiError(403, "Administrator access required", "FORBIDDEN");
+  }
+  next();
+}
+
+export async function onlyUser(
+  request: Request,
+  _response: Response,
+  next: NextFunction,
+): Promise<void> {
+  if (request.user?.role !== "user") {
+    throw new ApiError(403, "User access required", "FORBIDDEN");
+  }
+
+  if (!(await activePrincipalExists(request.user))) {
+    throw new ApiError(403, "User access required", "FORBIDDEN");
+  }
   next();
 }

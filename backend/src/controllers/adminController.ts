@@ -11,6 +11,11 @@ import { deleteRecipeWithRelations, deleteUserWithRelations } from "../services/
 import { ApiError } from "../utils/apiError.js";
 import { comparePassword } from "../utils/password.js";
 import { createToken } from "../utils/token.js";
+import {
+  emailSchema,
+  fullNameSchema,
+  usernameSchema,
+} from "../utils/userValidation.js";
 import { assertObjectId, parseInput, routeParam } from "../utils/validation.js";
 
 const loginSchema = z.object({
@@ -22,6 +27,12 @@ const recipeLookupSchema = z.object({
   id: z.string().optional(),
   title: z.string().trim().min(1).optional(),
 }).refine((value) => Boolean(value.id || value.title), { message: "id or title is required" });
+
+const adminUserUpdateSchema = z.object({
+  username: usernameSchema.optional(),
+  fullName: fullNameSchema.optional(),
+  email: emailSchema.optional(),
+}).strict();
 
 const cookieOptions: CookieOptions = {
   httpOnly: true,
@@ -74,6 +85,25 @@ export const deleteUser: RequestHandler = async (request, response) => {
     throw new ApiError(404, "User not found", "NOT_FOUND");
   }
   response.status(200).json({ message: "User and associated data deleted" });
+};
+
+export const updateUser: RequestHandler = async (request, response) => {
+  const id = routeParam(request, "id");
+  assertObjectId(id, "user id");
+  const data = parseInput(adminUserUpdateSchema, request.body);
+  if (Object.keys(data).length === 0) {
+    throw new ApiError(400, "Please provide data to update", "EMPTY_UPDATE");
+  }
+
+  const user = await User.findById(id);
+  if (!user) throw new ApiError(404, "User not found", "NOT_FOUND");
+  if (data.username !== undefined) user.username = data.username;
+  if (data.fullName !== undefined) user.fullName = data.fullName;
+  if (data.email !== undefined) user.email = data.email;
+  await user.save();
+
+  const { password: _password, ...updatedUser } = user.toObject();
+  response.status(200).json({ message: "User updated successfully", user: updatedUser });
 };
 
 export const getRecipeByIdOrTitle: RequestHandler = async (request, response) => {

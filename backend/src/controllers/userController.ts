@@ -9,22 +9,25 @@ import { deleteUserWithRelations } from "../services/cascadeDelete.js";
 import { uploadImage } from "../services/storage.js";
 import { ApiError } from "../utils/apiError.js";
 import { comparePassword, hashPassword } from "../utils/password.js";
+import {
+  emailSchema,
+  fullNameSchema,
+  usernameSchema,
+} from "../utils/userValidation.js";
 import { parseInput, routeParam, stringArray } from "../utils/validation.js";
 
-const username = z.string().trim().toLowerCase().min(3).max(30).regex(/^[a-z0-9_]+$/);
-
 const registerSchema = z.object({
-  username,
-  fullName: z.string().trim().min(1).max(100),
-  email: z.string().trim().toLowerCase().email(),
+  username: usernameSchema,
+  fullName: fullNameSchema,
+  email: emailSchema,
   password: z.string().min(8).max(72),
   preferences: z.preprocess(stringArray, z.array(z.string().trim().min(1)).max(30)).default([]),
 }).strict();
 
 const editSchema = z.object({
-  username: username.optional(),
-  fullName: z.string().trim().min(1).max(100).optional(),
-  email: z.string().trim().toLowerCase().email().optional(),
+  username: usernameSchema.optional(),
+  fullName: fullNameSchema.optional(),
+  email: emailSchema.optional(),
   website: z.union([z.literal(""), z.url()]).optional(),
   bio: z.string().trim().max(500).optional(),
   preferences: z.preprocess(stringArray, z.array(z.string().trim().min(1)).max(30)).optional(),

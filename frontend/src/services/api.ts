@@ -5,7 +5,7 @@ const API_URL = (import.meta.env.VITE_BASE_URL || DEFAULT_API_URL).replace(
   "",
 );
 
-type RequestBody = BodyInit | Record<string, unknown> | unknown[];
+type RequestBody = BodyInit | object;
 
 interface ApiRequestOptions extends Omit<RequestInit, "body"> {
   body?: RequestBody;
