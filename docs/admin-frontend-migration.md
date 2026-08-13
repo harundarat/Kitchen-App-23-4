@@ -1039,13 +1039,13 @@ exit gate passes.
 
 ### User administration
 
-- [ ] User list and case-insensitive search work.
-- [ ] User detail and current-data loading work.
-- [ ] User edit works with validation/conflict feedback.
-- [ ] Cascade deletion requires confirmation.
-- [ ] Successful deletion updates list/detail navigation.
-- [ ] Loading, empty, not-found, authorization, and server errors are visible.
-- [ ] Phase 4 gate passes.
+- [x] User list and case-insensitive search work.
+- [x] User detail and current-data loading work.
+- [x] User edit works with validation/conflict feedback.
+- [x] Cascade deletion requires confirmation.
+- [x] Successful deletion updates list/detail navigation.
+- [x] Loading, empty, not-found, authorization, and server errors are visible.
+- [x] Phase 4 gate passes.
 
 ### Recipe administration
 
@@ -1097,6 +1097,8 @@ changing the plan.
 | 2026-08-13 | Phase 2 made the existing session provider role-aware and added a typed `adminService`. | Frontend tests cover anonymous/user/admin/error refresh states, role-aware logout, and no web-storage token. | Admin pages can use the shared API client with abortable reads and normalized recipe details. |
 | 2026-08-13 | Phase 3 replaced pathname chrome checks with consumer/editor/admin nested layouts. | Route tests cover loading, role redirects, deep links, login failure, logout, and admin navigation state. | Navbar/footer logic has no admin pathname exception; `AdditionalInfoProvider` is limited to consumer layouts. |
 | 2026-08-13 | Phase 3 shell uses existing Flowbite Sidebar/Drawer primitives with Iconify navigation. | Responsive controls have labels and `aria-expanded`; navigation uses `NavLink` URL state. | The shell shares the existing theme and frontend tokens while remaining independently navigable on mobile and desktop. |
+| 2026-08-13 | Phase 4 implemented authenticated user management against `adminService`. | Focused RTL tests cover initial/empty/error loads, case-insensitive filtering, edit cancellation/payload, all documented error classes, and confirmed deletion. | List deletion is optimistic after API success; detail deletion returns to `/admin/users`. |
+| 2026-08-13 | Phase 4 extracted `ConfirmDialog` from the consumer recipe card. | Both admin user deletion and existing consumer recipe deletion now call the same Flowbite confirmation component. | Destructive actions require confirmation while retaining the existing consumer delete endpoint and feedback. |
 | YYYY-MM-DD | _Add new discovery/decision_                                     | _Evidence_                                            | _Plan effect_                                                                         |
 
 ## 13. Completion criteria
