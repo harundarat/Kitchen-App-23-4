@@ -3,6 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { toast } from "react-hot-toast";
 import Card from "../components/common/Card";
+import {
+  RecipeHero,
+  RecipeIngredients,
+  RecipeNutrition,
+  RecipeSteps,
+} from "../components/features/RecipePresentation";
 import BlankProfile from "../assets/blank_profile.webp";
 import { useUser } from "../context/userContext";
 import {
@@ -130,28 +136,9 @@ export default function Recipe() {
   return (
     <main className="mt-28 mb-20 w-full px-5 lg:px-0">
       {/* Header */}
-      <section className="relative mx-auto h-fit w-full max-w-[1080px] overflow-hidden rounded-lg">
-        <img
-          src={recipe.image}
-          className="aspect-[16/11] w-full bg-gray-200 object-cover md:aspect-[16/6] md:blur-[5px]"
-          alt="thumbnail"
-        />
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20 p-8">
-          <h1 className="text-bg text-xl font-bold drop-shadow-sm sm:text-3xl">
-            {recipe.title}
-          </h1>
-          <img
-            src="/kitchen-craft-ic.svg"
-            alt="logo"
-            width={30}
-            className="absolute right-4 bottom-4 opacity-2 opacity-50 md:right-8 md:bottom-8"
-          />
-          <div className="bg-accent-2 text-bg absolute bottom-4 left-4 flex h-fit w-fit items-center gap-1 rounded-full px-3 py-1 text-xs sm:bottom-6 sm:left-6 sm:text-sm">
-            <Icon width={19} icon="mingcute:time-line" />
-            <p>{formatMinute(Number(recipe.totalTime) || 0)}</p>
-          </div>
-        </div>
-      </section>
+      <div className="mx-auto w-full max-w-[1080px]">
+        <RecipeHero recipe={recipe} />
+      </div>
       <div className="mx-auto mt-5 flex max-w-[1080px] flex-col gap-8 md:flex-row">
         <main className="w-full min-w-[70%]">
           {/* Like, Save, Share, Total Time */}
@@ -196,6 +183,8 @@ export default function Recipe() {
 
             {isUser && (
               <button
+                type="button"
+                aria-label="Laporkan resep"
                 onClick={() => setOpenModal(true)}
                 className="group relative ml-auto"
               >
@@ -229,102 +218,33 @@ export default function Recipe() {
           </section>
           <hr className="my-4 border-gray-300" />
           {/* Bahan Bahan */}
-          <section className="flex flex-col gap-3">
-            <h1 className="font-semibold">Bahan-bahan</h1>
-            {recipe.ingredients?.map((item, index) => (
-              <div
-                key={index}
-                className="flex h-11 w-full max-w-[90%] items-center justify-between rounded-sm border border-gray-300 bg-gray-100 px-4 py-2 md:max-w-[80%]"
+          <RecipeIngredients
+            ingredients={recipe.ingredients}
+            trailing={(ingredient) => (
+              <button
+                onClick={() =>
+                  window.open(
+                    `https://mart.grab.com/id/id/search?keyword=${ingredient}`,
+                    "_blank",
+                  )
+                }
+                className="text-accent-1 shrink-0 font-medium"
               >
-                <p>{item}</p>
-                <button
-                  onClick={() =>
-                    window.open(
-                      `https://mart.grab.com/id/id/search?keyword=${item}`,
-                      "_blank",
-                    )
-                  }
-                  className="text-accent-1 font-medium"
-                >
-                  Cek Harga
-                </button>
-              </div>
-            ))}
-          </section>
+                Cek Harga
+              </button>
+            )}
+          />
           <hr className="my-4 border-gray-300" />
           {/* Informasi Nilai Gizi */}
           {nutrition.energi !== undefined && (
             <>
-              <section>
-                <h1 className="mb-4 font-semibold">Informasi Nilai Gizi</h1>
-                <div className="grid w-full grid-cols-2 items-start gap-4 rounded-sm border border-gray-300 bg-gray-100 px-6 py-4 sm:grid-cols-5 lg:grid-cols-7">
-                  <div className="flex flex-col items-center">
-                    <h1 className="text-center">Energi Total</h1>
-                    <p className="font-semibold">{nutrition?.energi} kkal</p>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <h1 className="text-center">Lemak Total</h1>
-                    <p className="font-semibold">{nutrition?.lemakTotal} g</p>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <h1 className="text-center">Lemak Jenuh</h1>
-                    <p className="font-semibold">{nutrition?.lemakJenuh} g</p>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <h1 className="text-center">Protein</h1>
-                    <p className="font-semibold">{nutrition?.protein} g</p>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <h1 className="text-center">Karbohidrat</h1>
-                    <p className="font-semibold">{nutrition?.karb} g</p>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <h1 className="text-center">Gula</h1>
-                    <p className="font-semibold">{nutrition?.gula} g</p>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <h1 className="text-center">Garam</h1>
-                    <p className="font-semibold">{nutrition?.garam} mg</p>
-                  </div>
-                </div>
-                <p className="mt-2 text-xs text-gray-500 italic">
-                  *Nilai gizi yang ditampilkan merupakan perkiraan dan mungkin
-                  tidak sepenuhnya akurat.
-                </p>
-              </section>
+              <RecipeNutrition nutrition={recipe.nutrition} />
               <hr className="my-4 border-gray-300" />
             </>
           )}
 
           {/* Langkah */}
-          <section className="flex flex-col gap-4">
-            <h1 className="mt-4 font-semibold">Langkah-langkah</h1>
-            {recipe.video && (
-              <iframe
-                className="aspect-video w-full rounded-lg"
-                src={`https://www.youtube.com/embed/${extractYouTubeID(recipe.video)}`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              ></iframe>
-            )}
-            {recipe.steps.map((item, index) => (
-              <div key={index} className="flex items-start gap-2">
-                <h1 className="bg-primary text-bg flex aspect-square w-7 items-center justify-center rounded-full">
-                  {index + 1}
-                </h1>
-                <div className="flex w-full flex-col gap-2">
-                  <p>{item.description}</p>
-                  {item.image && (
-                    <img
-                      src={item.image}
-                      alt="step"
-                      className="aspect-square w-32 rounded-sm"
-                    />
-                  )}
-                </div>
-              </div>
-            ))}
-          </section>
+          <RecipeSteps steps={recipe.steps} video={recipe.video} />
         </main>
         <hr className="border-gray-300 md:invisible" />
         <MoreRecipes category={recipe.categories} />
@@ -542,33 +462,4 @@ function ModalReport({
       </Modal>
     </>
   );
-}
-
-function extractYouTubeID(url: string) {
-  const regexList = [
-    /youtu\.be\/([a-zA-Z0-9_-]+)/,
-    /youtube\.com\/embed\/([a-zA-Z0-9_-]+)/,
-    /youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/,
-  ];
-
-  for (const regex of regexList) {
-    const match = url.match(regex);
-    if (match && match[1]) {
-      return match[1];
-    }
-  }
-
-  return null;
-}
-function formatMinute(menit: number) {
-  const jam = Math.floor(menit / 60);
-  const sisaMenit = menit % 60;
-
-  if (jam > 0 && sisaMenit > 0) {
-    return `${jam} j ${sisaMenit} m`;
-  } else if (jam > 0) {
-    return `${jam} j`;
-  } else {
-    return `${sisaMenit} m`;
-  }
 }

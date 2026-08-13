@@ -1049,12 +1049,12 @@ exit gate passes.
 
 ### Recipe administration
 
-- [ ] Recipe list and case-insensitive search work.
-- [ ] Current response shape is normalized in the service layer.
-- [ ] Recipe detail renders current fields and optional data.
-- [ ] Public recipe presentation is reused without consumer actions.
-- [ ] Responsive and accessibility review passes at required widths.
-- [ ] Phase 5 gate passes.
+- [x] Recipe list and case-insensitive search work.
+- [x] Current response shape is normalized in the service layer.
+- [x] Recipe detail renders current fields and optional data.
+- [x] Public recipe presentation is reused without consumer actions.
+- [x] Responsive and accessibility review passes at required widths.
+- [x] Phase 5 gate passes.
 
 ### Acceptance and retirement
 
@@ -1099,6 +1099,8 @@ changing the plan.
 | 2026-08-13 | Phase 3 shell uses existing Flowbite Sidebar/Drawer primitives with Iconify navigation. | Responsive controls have labels and `aria-expanded`; navigation uses `NavLink` URL state. | The shell shares the existing theme and frontend tokens while remaining independently navigable on mobile and desktop. |
 | 2026-08-13 | Phase 4 implemented authenticated user management against `adminService`. | Focused RTL tests cover initial/empty/error loads, case-insensitive filtering, edit cancellation/payload, all documented error classes, and confirmed deletion. | List deletion is optimistic after API success; detail deletion returns to `/admin/users`. |
 | 2026-08-13 | Phase 4 extracted `ConfirmDialog` from the consumer recipe card. | Both admin user deletion and existing consumer recipe deletion now call the same Flowbite confirmation component. | Destructive actions require confirmation while retaining the existing consumer delete endpoint and feedback. |
+| 2026-08-13 | Phase 5 shares recipe display primitives instead of copying the consumer detail page. | `RecipePresentation` renders the current recipe DTO while consumer mutations remain in `Recipe.tsx`. | Admin detail stays read-only and supports structured steps plus optional media/nutrition without legacy aliases. |
+| 2026-08-13 | Phase 5 visual and keyboard review passed at 360px, 768px, and 1280px. | Temporary Playwright checks exercised the responsive table, mobile drawer, active navigation, focus, and no-consumer-controls detail view. | Responsive overflow is retained for compact tables; the admin shell follows frontend tokens and Flowbite patterns. |
 | YYYY-MM-DD | _Add new discovery/decision_                                     | _Evidence_                                            | _Plan effect_                                                                         |
 
 ## 13. Completion criteria
