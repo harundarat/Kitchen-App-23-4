@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState, type ContextType, type ReactNode } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import AdminLayout from "../components/layouts/AdminLayout";
 import { RequireAdmin } from "../components/layouts/RequireRole";
@@ -14,6 +15,7 @@ vi.mock("../services/admin", () => ({ adminService: adminServiceMock }));
 
 type SessionValue = NonNullable<ContextType<typeof UserContext>>;
 type Role = "user" | "admin" | null;
+type SessionRefreshResult = Awaited<ReturnType<SessionValue["refreshSession"]>>;
 
 function sessionValue(
   role: Role,
@@ -28,7 +30,7 @@ function sessionValue(
     isLogged,
     isUser: isLogged && role === "user",
     isAdmin: isLogged && role === "admin",
-    refreshSession: async () => undefined,
+    refreshSession: async () => ({ user: null, error: null }),
     logout: async () => undefined,
     ...overrides,
   };
@@ -75,10 +77,27 @@ function renderAdminLayout(value: SessionValue) {
   );
 }
 
-function AdminLoginHarness({ initialRole = null }: { initialRole?: Role }) {
+function AdminLoginHarness({
+  initialRole = null,
+  refreshResult,
+}: {
+  initialRole?: Role;
+  refreshResult?: SessionRefreshResult;
+}) {
   const [role, setRole] = useState<Role>(initialRole);
   const value = sessionValue(role, role ? "authenticated" : "anonymous", {
-    refreshSession: async () => setRole("admin"),
+    refreshSession: async () => {
+      const result = refreshResult ?? {
+        user: {
+          id: "admin-1",
+          username: "admin",
+          role: "admin" as const,
+        },
+        error: null,
+      };
+      setRole(result.user?.role ?? null);
+      return result;
+    },
   });
 
   return (
@@ -102,6 +121,8 @@ function AdminLoginHarness({ initialRole = null }: { initialRole?: Role }) {
 
 describe("administrator routes and shell", () => {
   afterEach(() => {
+    toast.dismiss();
+    vi.restoreAllMocks();
     vi.clearAllMocks();
   });
 
@@ -145,6 +166,7 @@ describe("administrator routes and shell", () => {
 
   it("returns to a protected deep link after administrator login", async () => {
     adminServiceMock.login.mockResolvedValue({});
+    const successToast = vi.spyOn(toast, "success");
     const user = userEvent.setup();
     render(<AdminLoginHarness />);
 
@@ -161,7 +183,76 @@ describe("administrator routes and shell", () => {
       email: "admin@example.test",
       password: "secret-password",
     });
+    expect(successToast).toHaveBeenCalledWith("Login administrator berhasil");
     expect(await screen.findByText("Detail resep admin")).toBeInTheDocument();
+  });
+
+  it.each([
+    ["anonymous", { user: null, error: null }],
+    [
+      "a consumer",
+      {
+        user: { id: "user-1", username: "koki", role: "user" as const },
+        error: null,
+      },
+    ],
+  ] as const)(
+    "does not report success when the refreshed session is %s",
+    async (_description, refreshResult) => {
+      adminServiceMock.login.mockResolvedValue({});
+      const successToast = vi.spyOn(toast, "success");
+      const errorToast = vi.spyOn(toast, "error");
+      const user = userEvent.setup();
+      render(<AdminLoginHarness refreshResult={refreshResult} />);
+
+      await user.type(
+        screen.getByLabelText("Email administrator"),
+        "admin@example.test",
+      );
+      await user.type(screen.getByLabelText("Kata sandi"), "secret-password");
+      await user.click(
+        screen.getByRole("button", { name: "Masuk sebagai admin" }),
+      );
+
+      await waitFor(() => {
+        expect(errorToast).toHaveBeenCalledWith(
+          "Sesi administrator tidak dapat dikonfirmasi",
+        );
+      });
+      expect(successToast).not.toHaveBeenCalled();
+      expect(screen.getByLabelText("Email administrator")).toBeInTheDocument();
+      expect(screen.queryByText("Detail resep admin")).not.toBeInTheDocument();
+    },
+  );
+
+  it("does not duplicate feedback when session refresh reports an error", async () => {
+    adminServiceMock.login.mockResolvedValue({});
+    const successToast = vi.spyOn(toast, "success");
+    const errorToast = vi.spyOn(toast, "error");
+    const user = userEvent.setup();
+    render(
+      <AdminLoginHarness
+        refreshResult={{ user: null, error: new Error("Gateway unavailable") }}
+      />,
+    );
+
+    await user.type(
+      screen.getByLabelText("Email administrator"),
+      "admin@example.test",
+    );
+    await user.type(screen.getByLabelText("Kata sandi"), "secret-password");
+    await user.click(
+      screen.getByRole("button", { name: "Masuk sebagai admin" }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Masuk sebagai admin" }),
+      ).toBeEnabled();
+    });
+    expect(successToast).not.toHaveBeenCalled();
+    expect(errorToast).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Email administrator")).toBeInTheDocument();
   });
 
   it("keeps failed admin login in place and warns when replacing a user session", async () => {

@@ -15,6 +15,11 @@ const SESSION_ERROR_TOAST_ID = "session-refresh-error";
 
 export type SessionStatus = "loading" | "authenticated" | "anonymous";
 
+export interface SessionRefreshResult {
+  user: SessionUser | null;
+  error: Error | null;
+}
+
 interface UserContextValue {
   user: SessionUser | null;
   status: SessionStatus;
@@ -22,7 +27,7 @@ interface UserContextValue {
   isLogged: boolean;
   isUser: boolean;
   isAdmin: boolean;
-  refreshSession: (signal?: AbortSignal) => Promise<void>;
+  refreshSession: (signal?: AbortSignal) => Promise<SessionRefreshResult>;
   logout: () => Promise<void>;
 }
 
@@ -41,17 +46,18 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
   const [sessionError, setSessionError] = useState<Error | null>(null);
 
   const refreshSession = useCallback(async (signal?: AbortSignal) => {
-    if (signal?.aborted) return;
+    if (signal?.aborted) return { user: null, error: null };
     setStatus("loading");
     setSessionError(null);
     try {
       const data = await api.get<{ user: SessionUser }>("/auth", { signal });
-      if (signal?.aborted) return;
+      if (signal?.aborted) return { user: null, error: null };
       setUser(data.user);
       setStatus("authenticated");
       toast.dismiss(SESSION_ERROR_TOAST_ID);
+      return { user: data.user, error: null };
     } catch (error) {
-      if (signal?.aborted) return;
+      if (signal?.aborted) return { user: null, error: null };
 
       const isAnonymous = error instanceof ApiError && error.status === 401;
       const sessionFailure = isAnonymous
@@ -71,6 +77,8 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
       } else {
         toast.dismiss(SESSION_ERROR_TOAST_ID);
       }
+
+      return { user: null, error: sessionFailure };
     }
   }, []);
 

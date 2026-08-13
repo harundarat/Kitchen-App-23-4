@@ -46,7 +46,7 @@ const adminContext = {
   isLogged: true,
   isUser: false,
   isAdmin: true,
-  refreshSession: async () => undefined,
+  refreshSession: async () => ({ user: null, error: null }),
   logout: async () => undefined,
 };
 

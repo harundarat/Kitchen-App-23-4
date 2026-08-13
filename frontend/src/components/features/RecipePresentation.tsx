@@ -86,12 +86,20 @@ export function RecipeNutrition({
   if (!nutrition) return null;
   const nutrients = [
     ["Energi Total", nutrition.calories, "kkal"],
-    ["Lemak Total", nutrition.totalFat?.amount, "g"],
-    ["Lemak Jenuh", nutrition.saturatedFat?.amount, "g"],
-    ["Protein", nutrition.protein?.amount, "g"],
-    ["Karbohidrat", nutrition.carbohydrates?.amount, "g"],
-    ["Gula", nutrition.sugar?.amount, "g"],
-    ["Garam", nutrition.sodium?.amount, "mg"],
+    ["Lemak Total", nutrition.totalFat?.amount, nutrition.totalFat?.unit],
+    [
+      "Lemak Jenuh",
+      nutrition.saturatedFat?.amount,
+      nutrition.saturatedFat?.unit,
+    ],
+    ["Protein", nutrition.protein?.amount, nutrition.protein?.unit],
+    [
+      "Karbohidrat",
+      nutrition.carbohydrates?.amount,
+      nutrition.carbohydrates?.unit,
+    ],
+    ["Gula", nutrition.sugar?.amount, nutrition.sugar?.unit],
+    ["Garam", nutrition.sodium?.amount, nutrition.sodium?.unit],
   ] as const;
 
   return (
