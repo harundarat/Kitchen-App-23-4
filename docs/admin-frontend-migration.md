@@ -1058,12 +1058,12 @@ exit gate passes.
 
 ### Acceptance and retirement
 
-- [ ] Existing `.env` files backed up without exposing values.
-- [ ] Isolated acceptance environment configured and admin seeded.
-- [ ] Full admin acceptance matrix passes.
-- [ ] Representative consumer regression matrix passes.
-- [ ] Environment files restored exactly.
-- [ ] Phase 6 gate passes.
+- [x] Existing `.env` files backed up without exposing values.
+- [x] Isolated acceptance environment configured and admin seeded.
+- [x] Full admin acceptance matrix passes.
+- [x] Representative consumer regression matrix passes.
+- [x] Environment files restored exactly.
+- [x] Phase 6 gate passes.
 - [ ] Documentation updated.
 - [ ] Standalone `admin` directory removed.
 - [ ] Final clean-install checks and audits pass.
@@ -1101,6 +1101,10 @@ changing the plan.
 | 2026-08-13 | Phase 4 extracted `ConfirmDialog` from the consumer recipe card. | Both admin user deletion and existing consumer recipe deletion now call the same Flowbite confirmation component. | Destructive actions require confirmation while retaining the existing consumer delete endpoint and feedback. |
 | 2026-08-13 | Phase 5 shares recipe display primitives instead of copying the consumer detail page. | `RecipePresentation` renders the current recipe DTO while consumer mutations remain in `Recipe.tsx`. | Admin detail stays read-only and supports structured steps plus optional media/nutrition without legacy aliases. |
 | 2026-08-13 | Phase 5 visual and keyboard review passed at 360px, 768px, and 1280px. | Temporary Playwright checks exercised the responsive table, mobile drawer, active navigation, focus, and no-consumer-controls detail view. | Responsive overflow is retained for compact tables; the admin shell follows frontend tokens and Flowbite patterns. |
+| 2026-08-13 | Phase 6 acceptance backed up an existing `frontend/.env`; no original `backend/.env` existed. | The protected temporary backup was compared byte-for-byte after graceful service shutdown; the acceptance-only backend file was removed. | No existing environment value was exposed or retained, and no credential-bearing file became tracked. |
+| 2026-08-13 | Isolated Mongo acceptance passed the protected API, cascade, session, and consumer flows. | Disposable users created a recipe, another user liked/saved/reported it, and administrator deletion left recipes, nutrition, likes, saves, and reports all at zero; anonymous/user/invalid-token admin requests returned 401/403/401. | The current backend contract and cascade behavior are accepted before standalone-admin retirement. |
+| 2026-08-13 | Firebase storage was not configured in the local acceptance environment. | A real multipart upload returned the documented `503 STORAGE_NOT_CONFIGURED` response; no external credentials were invented. | Upload-only create/edit coverage relies on the automated frontend/backend tests; all non-storage full-stack cases passed. |
+| 2026-08-13 | Browser acceptance used temporary Playwright tooling outside repository dependencies. | Direct admin deep links, login return, refresh/logout, drawer/search/detail, keyboard focus, and representative consumer login/search/save/report/profile/editor flows passed in Chromium. | The repository dependency graph remains unchanged; local browser checks used `localhost:5173`, matching the configured CORS origin. |
 | YYYY-MM-DD | _Add new discovery/decision_                                     | _Evidence_                                            | _Plan effect_                                                                         |
 
 ## 13. Completion criteria
