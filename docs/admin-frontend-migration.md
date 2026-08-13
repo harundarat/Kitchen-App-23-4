@@ -1008,11 +1008,11 @@ exit gate passes.
 
 ### Preparation
 
-- [ ] Current branch/SHA and working tree rechecked.
-- [ ] Unrelated user changes identified and preserved.
-- [ ] Baseline frontend checks pass.
-- [ ] Baseline backend checks pass.
-- [ ] Legacy admin build behavior reconfirmed.
+- [x] Current branch/SHA and working tree rechecked.
+- [x] Unrelated user changes identified and preserved.
+- [x] Baseline frontend checks pass.
+- [x] Baseline backend checks pass.
+- [x] Legacy admin build behavior reconfirmed.
 
 ### Test and contract foundation
 
@@ -1089,6 +1089,7 @@ changing the plan.
 | 2026-08-13 | Standalone admin is removed only after acceptance.               | Product decision and rollback requirement.            | Keep it as comparison source through Phase 6; delete in Phase 7.                      |
 | 2026-08-13 | Local `.env` creation/modification is authorized for acceptance. | Explicit user authorization.                          | Back up and restore existing files; use isolated database/configuration.              |
 | 2026-08-13 | Frontend has one transitive high audit finding.                  | `npm audit`; `nanoid@3.3.16` under PostCSS.           | Resolve through a compatible lockfile update in Phase 1.                              |
+| 2026-08-13 | Phase 0 baseline rerun on `migrate/admin-into-frontend` at `1c6eba3`; worktree was clean. | `npm ci` plus all specified checks in each independent project. | Frontend typecheck/lint/format/temp build, backend check/temp build, and legacy-admin temp build passed. |
 | YYYY-MM-DD | _Add new discovery/decision_                                     | _Evidence_                                            | _Plan effect_                                                                         |
 
 ## 13. Completion criteria
