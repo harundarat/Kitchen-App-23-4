@@ -1,9 +1,12 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "react-hot-toast";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { RequireAdmin } from "../components/layouts/RequireRole";
 import { UserContextProvider, useUser } from "../context/userContext";
 import { apiRequest } from "../services/api";
+import { adminService } from "../services/admin";
 
 function sessionResponse(role: "user" | "admin" = "user"): Response {
   return new Response(
@@ -48,7 +51,24 @@ function SessionProbe() {
       <button type="button" onClick={() => void refreshSession()}>
         Segarkan sesi
       </button>
+      <button
+        type="button"
+        onClick={() => void adminService.getUsers().catch(() => undefined)}
+      >
+        Muat data admin
+      </button>
     </>
+  );
+}
+
+function ProtectedAdminProbe() {
+  return (
+    <button
+      type="button"
+      onClick={() => void adminService.getUsers().catch(() => undefined)}
+    >
+      Muat halaman admin
+    </button>
   );
 }
 
@@ -116,6 +136,137 @@ describe("UserContextProvider", () => {
 
     expect(
       await screen.findByText("Sesi untuk koki: administrator"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Admin: true")).toBeInTheDocument();
+  });
+
+  it("refreshes stale shared admin state after a protected request is unauthorized", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse("admin"),
+      new Response(JSON.stringify({ error: "Session expired" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+      new Response(JSON.stringify({ error: "Authentication required" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const user = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <MemoryRouter initialEntries={["/admin/users"]}>
+          <Routes>
+            <Route element={<RequireAdmin />}>
+              <Route path="/admin/users" element={<ProtectedAdminProbe />} />
+            </Route>
+            <Route path="/admin/login" element={<p>Login administrator</p>} />
+          </Routes>
+        </MemoryRouter>
+      </UserContextProvider>,
+    );
+
+    await user.click(
+      await screen.findByRole("button", { name: "Muat halaman admin" }),
+    );
+
+    expect(await screen.findByText("Login administrator")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      expect.stringMatching(/\/api\/auth$/),
+      expect.objectContaining({ credentials: "include", method: "GET" }),
+    );
+  });
+
+  it("hydrates a replacement consumer session after an admin authorization failure", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse("admin"),
+      new Response(JSON.stringify({ error: "Admin access required" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      }),
+      sessionResponse("user"),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const user = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <SessionProbe />
+      </UserContextProvider>,
+    );
+
+    await screen.findByText("Sesi untuk koki: administrator");
+    await user.click(screen.getByRole("button", { name: "Muat data admin" }));
+
+    expect(
+      await screen.findByText("Sesi untuk koki: pengguna"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Admin: false")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("retains an admin session when the authorization refresh confirms it", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse("admin"),
+      new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      }),
+      sessionResponse("admin"),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const user = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <SessionProbe />
+      </UserContextProvider>,
+    );
+
+    await screen.findByText("Sesi untuk koki: administrator");
+    await user.click(screen.getByRole("button", { name: "Muat data admin" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+
+    expect(
+      screen.getByText("Sesi untuk koki: administrator"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Admin: true")).toBeInTheDocument();
+  });
+
+  it("does not refresh shared session state for unrelated admin failures", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse("admin"),
+      new Response(JSON.stringify({ error: "Gateway unavailable" }), {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const user = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <SessionProbe />
+      </UserContextProvider>,
+    );
+
+    await screen.findByText("Sesi untuk koki: administrator");
+    await user.click(screen.getByRole("button", { name: "Muat data admin" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    expect(
+      screen.getByText("Sesi untuk koki: administrator"),
     ).toBeInTheDocument();
     expect(screen.getByText("Admin: true")).toBeInTheDocument();
   });
