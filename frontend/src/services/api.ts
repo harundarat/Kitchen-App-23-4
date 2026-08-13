@@ -47,16 +47,39 @@ function isNativeBody(body: RequestBody): body is BodyInit {
   );
 }
 
+function createRequestSignal(callerSignal?: AbortSignal | null): {
+  signal: AbortSignal;
+  cleanup: () => void;
+} {
+  const timeoutSignal = AbortSignal.timeout(15_000);
+  if (!callerSignal) return { signal: timeoutSignal, cleanup: () => undefined };
+
+  const controller = new AbortController();
+  const abortFromCaller = () => controller.abort(callerSignal.reason);
+  const abortFromTimeout = () => controller.abort(timeoutSignal.reason);
+
+  if (callerSignal.aborted) abortFromCaller();
+  else callerSignal.addEventListener("abort", abortFromCaller, { once: true });
+
+  if (timeoutSignal.aborted) abortFromTimeout();
+  else
+    timeoutSignal.addEventListener("abort", abortFromTimeout, { once: true });
+
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      callerSignal.removeEventListener("abort", abortFromCaller);
+      timeoutSignal.removeEventListener("abort", abortFromTimeout);
+    },
+  };
+}
+
 export async function apiRequest<T = void>(
   endpoint: string,
   options: ApiRequestOptions = {},
 ): Promise<T> {
   const headers = new Headers(options.headers);
   headers.set("Accept", "application/json");
-  const timeoutSignal = AbortSignal.timeout(15_000);
-  const signal = options.signal
-    ? AbortSignal.any([options.signal, timeoutSignal])
-    : timeoutSignal;
 
   let body: BodyInit | undefined;
   if (options.body !== undefined) {
@@ -67,28 +90,33 @@ export async function apiRequest<T = void>(
       body = JSON.stringify(options.body);
     }
   }
+  const { signal, cleanup } = createRequestSignal(options.signal);
 
-  const response = await fetch(`${API_URL}/${endpoint.replace(/^\//, "")}`, {
-    ...options,
-    body,
-    credentials: "include",
-    headers,
-    signal,
-  });
+  try {
+    const response = await fetch(`${API_URL}/${endpoint.replace(/^\//, "")}`, {
+      ...options,
+      body,
+      credentials: "include",
+      headers,
+      signal,
+    });
 
-  const contentType = response.headers.get("content-type");
-  const payload: unknown =
-    response.status === 204
-      ? undefined
-      : contentType?.includes("application/json")
-        ? await response.json()
-        : await response.text();
+    const contentType = response.headers.get("content-type");
+    const payload: unknown =
+      response.status === 204
+        ? undefined
+        : contentType?.includes("application/json")
+          ? await response.json()
+          : await response.text();
 
-  if (!response.ok) {
-    throw new ApiError(response.status, payload);
+    if (!response.ok) {
+      throw new ApiError(response.status, payload);
+    }
+
+    return payload as T;
+  } finally {
+    cleanup();
   }
-
-  return payload as T;
 }
 
 export const api = {

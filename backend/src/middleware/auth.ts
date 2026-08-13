@@ -4,7 +4,6 @@ import { isValidObjectId } from "mongoose";
 import { Admin } from "../models/admin.js";
 import { Recipe } from "../models/recipe.js";
 import { User } from "../models/user.js";
-import type { AuthUser } from "../types/express.js";
 import { ApiError } from "../utils/apiError.js";
 import { assertObjectId, routeParam } from "../utils/validation.js";
 import { verifyToken } from "../utils/token.js";
@@ -42,10 +41,18 @@ export async function authorizeUsername(
   next();
 }
 
-async function activePrincipalExists(user: AuthUser): Promise<boolean> {
-  if (!isValidObjectId(user.id)) return false;
-  const model = user.role === "admin" ? Admin : User;
-  return Boolean(await model.exists({ _id: user.id }));
+async function hydrateActivePrincipal(request: Request): Promise<boolean> {
+  const user = request.user;
+  if (!user || !isValidObjectId(user.id)) return false;
+
+  const principal =
+    user.role === "admin"
+      ? await Admin.findById(user.id).select("username").lean()
+      : await User.findById(user.id).select("username").lean();
+  if (!principal) return false;
+
+  request.user = { ...user, username: principal.username };
+  return true;
 }
 
 export async function requireActivePrincipal(
@@ -53,7 +60,7 @@ export async function requireActivePrincipal(
   _response: Response,
   next: NextFunction,
 ): Promise<void> {
-  if (!request.user || !(await activePrincipalExists(request.user))) {
+  if (!(await hydrateActivePrincipal(request))) {
     throw new ApiError(401, "Authentication required", "UNAUTHENTICATED");
   }
   next();
@@ -84,7 +91,7 @@ export async function onlyAdmin(
     throw new ApiError(403, "Administrator access required", "FORBIDDEN");
   }
 
-  if (!(await activePrincipalExists(request.user))) {
+  if (!(await hydrateActivePrincipal(request))) {
     throw new ApiError(403, "Administrator access required", "FORBIDDEN");
   }
   next();
@@ -99,7 +106,7 @@ export async function onlyUser(
     throw new ApiError(403, "User access required", "FORBIDDEN");
   }
 
-  if (!(await activePrincipalExists(request.user))) {
+  if (!(await hydrateActivePrincipal(request))) {
     throw new ApiError(403, "User access required", "FORBIDDEN");
   }
   next();

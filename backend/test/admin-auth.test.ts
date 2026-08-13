@@ -28,8 +28,10 @@ function replaceMethod<T extends object, K extends keyof T>(
 function setActiveAdmin(): void {
   replaceMethod(
     Admin,
-    "exists",
-    (async () => ({ _id: ADMIN_ID })) as unknown as typeof Admin.exists,
+    "findById",
+    (() => ({
+      select: () => ({ lean: async () => ({ username: "administrator" }) }),
+    })) as unknown as typeof Admin.findById,
   );
 }
 
@@ -68,8 +70,10 @@ describe("administrator authorization and user update contract", () => {
   it("rejects stale user and administrator principals during session refresh", async () => {
     replaceMethod(
       User,
-      "exists",
-      (async () => null) as unknown as typeof User.exists,
+      "findById",
+      (() => ({
+        select: () => ({ lean: async () => null }),
+      })) as unknown as typeof User.findById,
     );
     await request(app)
       .get("/api/auth")
@@ -78,13 +82,49 @@ describe("administrator authorization and user update contract", () => {
 
     replaceMethod(
       Admin,
-      "exists",
-      (async () => null) as unknown as typeof Admin.exists,
+      "findById",
+      (() => ({
+        select: () => ({ lean: async () => null }),
+      })) as unknown as typeof Admin.findById,
     );
     await request(app)
       .get("/api/auth")
       .set("Authorization", `Bearer ${adminToken()}`)
       .expect(401);
+  });
+
+  it("hydrates a renamed user's current username for active sessions", async () => {
+    replaceMethod(
+      User,
+      "findById",
+      (() => ({
+        select: () => ({ lean: async () => ({ username: "koki_baru" }) }),
+      })) as unknown as typeof User.findById,
+    );
+    replaceMethod(
+      User,
+      "exists",
+      (async (filter: { username?: string }) => {
+        assert.equal(filter.username, "koki_baru");
+        return { _id: USER_ID };
+      }) as unknown as typeof User.exists,
+    );
+
+    const refreshed = await request(app)
+      .get("/api/auth")
+      .set("Authorization", `Bearer ${userToken()}`)
+      .expect(200);
+    assert.deepEqual(refreshed.body.user, {
+      id: USER_ID,
+      username: "koki_baru",
+      role: "user",
+    });
+
+    const authorized = await request(app)
+      .get("/api/auth/authorized/koki_baru")
+      .set("Authorization", `Bearer ${userToken()}`)
+      .expect(200);
+    assert.equal(authorized.body.user.username, "koki_baru");
   });
 
   it("keeps existing admin list, detail, and delete endpoints protected", async () => {

@@ -173,18 +173,31 @@ describe("UserContextProvider", () => {
   it("combines caller cancellation with the request timeout", async () => {
     const timeoutController = new AbortController();
     vi.spyOn(AbortSignal, "timeout").mockReturnValue(timeoutController.signal);
+    const unsupportedAny = Object.getOwnPropertyDescriptor(AbortSignal, "any");
+    Object.defineProperty(AbortSignal, "any", {
+      configurable: true,
+      value: undefined,
+    });
     const fetchMock = pendingFetch();
     vi.stubGlobal("fetch", fetchMock);
     const callerController = new AbortController();
 
-    const request = apiRequest("/auth", { signal: callerController.signal });
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
-    const requestSignal = fetchMock.mock.calls[0][1]?.signal;
+    try {
+      const request = apiRequest("/auth", { signal: callerController.signal });
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+      const requestSignal = fetchMock.mock.calls[0][1]?.signal;
 
-    expect(requestSignal).not.toBe(callerController.signal);
-    expect(requestSignal).not.toBe(timeoutController.signal);
-    callerController.abort();
-    await expect(request).rejects.toMatchObject({ name: "AbortError" });
+      expect(requestSignal).not.toBe(callerController.signal);
+      expect(requestSignal).not.toBe(timeoutController.signal);
+      callerController.abort();
+      await expect(request).rejects.toMatchObject({ name: "AbortError" });
+    } finally {
+      if (unsupportedAny) {
+        Object.defineProperty(AbortSignal, "any", unsupportedAny);
+      } else {
+        delete (AbortSignal as { any?: unknown }).any;
+      }
+    }
   });
 
   it("leaves loading and shows feedback when the session request times out", async () => {
