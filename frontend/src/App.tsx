@@ -45,6 +45,7 @@ function App() {
             <Route element={<RequireUser />}>
               <Route path="/profile/:username" element={<Profile />} />
             </Route>
+            <Route path="*" element={<NotFound />} />
           </Route>
 
           <Route element={<RequireUser />}>
@@ -66,8 +67,6 @@ function App() {
               <Route path="*" element={<AdminNotFound />} />
             </Route>
           </Route>
-
-          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </UserContextProvider>

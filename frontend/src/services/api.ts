@@ -53,6 +53,10 @@ export async function apiRequest<T = void>(
 ): Promise<T> {
   const headers = new Headers(options.headers);
   headers.set("Accept", "application/json");
+  const timeoutSignal = AbortSignal.timeout(15_000);
+  const signal = options.signal
+    ? AbortSignal.any([options.signal, timeoutSignal])
+    : timeoutSignal;
 
   let body: BodyInit | undefined;
   if (options.body !== undefined) {
@@ -69,7 +73,7 @@ export async function apiRequest<T = void>(
     body,
     credentials: "include",
     headers,
-    signal: options.signal ?? AbortSignal.timeout(15_000),
+    signal,
   });
 
   const contentType = response.headers.get("content-type");

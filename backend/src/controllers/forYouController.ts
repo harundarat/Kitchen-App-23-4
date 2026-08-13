@@ -4,7 +4,10 @@ import { Recipe } from "../models/recipe.js";
 import { User } from "../models/user.js";
 
 export const getForYouRecipes: RequestHandler = async (request, response) => {
-  const user = request.user ? await User.findById(request.user.id).select("preferences").lean() : null;
+  const user =
+    request.user?.role === "user"
+      ? await User.findById(request.user.id).select("preferences").lean()
+      : null;
 
   if (user?.preferences.length) {
     const recipes = await Recipe.find({ categories: { $in: user.preferences } })

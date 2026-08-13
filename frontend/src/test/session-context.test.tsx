@@ -1,7 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { toast } from "react-hot-toast";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { UserContextProvider, useUser } from "../context/userContext";
+import { apiRequest } from "../services/api";
 
 function sessionResponse(role: "user" | "admin" = "user"): Response {
   return new Response(
@@ -13,23 +15,52 @@ function sessionResponse(role: "user" | "admin" = "user"): Response {
 }
 
 function SessionProbe() {
-  const { isAdmin, isUser, logout, sessionError, status, user } = useUser();
-
-  if (status === "loading") return <p>Memuat sesi</p>;
-  if (sessionError) return <p>Gangguan sesi: {sessionError.message}</p>;
-  if (!user) return <p>Sesi anonim</p>;
+  const {
+    isAdmin,
+    isUser,
+    logout,
+    refreshSession,
+    sessionError,
+    status,
+    user,
+  } = useUser();
 
   return (
     <>
-      <p>
-        Sesi untuk {user.username}: {isUser ? "pengguna" : "administrator"}
-      </p>
-      <p>Admin: {String(isAdmin)}</p>
-      <button type="button" onClick={() => void logout()}>
-        Keluar
+      <p data-testid="session-status">{status}</p>
+      {status === "loading" ? (
+        <p>Memuat sesi</p>
+      ) : sessionError ? (
+        <p>Gangguan sesi: {sessionError.message}</p>
+      ) : !user ? (
+        <p>Sesi anonim</p>
+      ) : (
+        <>
+          <p>
+            Sesi untuk {user.username}: {isUser ? "pengguna" : "administrator"}
+          </p>
+          <p>Admin: {String(isAdmin)}</p>
+          <button type="button" onClick={() => void logout()}>
+            Keluar
+          </button>
+        </>
+      )}
+      <button type="button" onClick={() => void refreshSession()}>
+        Segarkan sesi
       </button>
     </>
   );
+}
+
+function pendingFetch() {
+  return vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+    return new Promise<Response>((_resolve, reject) => {
+      const signal = init?.signal;
+      signal?.addEventListener("abort", () => reject(signal.reason), {
+        once: true,
+      });
+    });
+  });
 }
 
 function setupFetch(...responses: Response[]) {
@@ -41,6 +72,7 @@ function setupFetch(...responses: Response[]) {
 
 describe("UserContextProvider", () => {
   afterEach(() => {
+    toast.dismiss();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     localStorage.clear();
@@ -89,6 +121,7 @@ describe("UserContextProvider", () => {
   });
 
   it("maps an unauthorized refresh to an anonymous session", async () => {
+    const errorToast = vi.spyOn(toast, "error");
     setupFetch(
       new Response(JSON.stringify({ error: "Authentication required" }), {
         status: 401,
@@ -106,9 +139,12 @@ describe("UserContextProvider", () => {
     );
 
     expect(await screen.findByText("Sesi anonim")).toBeInTheDocument();
+    expect(screen.getByTestId("session-status")).toHaveTextContent("anonymous");
+    expect(errorToast).not.toHaveBeenCalled();
   });
 
-  it("exposes server errors separately from an anonymous session", async () => {
+  it("surfaces server errors once while retaining anonymous session state", async () => {
+    const errorToast = vi.spyOn(toast, "error");
     setupFetch(
       new Response(JSON.stringify({ error: "Gateway unavailable" }), {
         status: 503,
@@ -128,6 +164,54 @@ describe("UserContextProvider", () => {
     expect(
       await screen.findByText("Gangguan sesi: Gateway unavailable"),
     ).toBeInTheDocument();
+    expect(screen.getByTestId("session-status")).toHaveTextContent("anonymous");
+    expect(errorToast).toHaveBeenCalledWith("Gateway unavailable", {
+      id: "session-refresh-error",
+    });
+  });
+
+  it("combines caller cancellation with the request timeout", async () => {
+    const timeoutController = new AbortController();
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(timeoutController.signal);
+    const fetchMock = pendingFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    const callerController = new AbortController();
+
+    const request = apiRequest("/auth", { signal: callerController.signal });
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    const requestSignal = fetchMock.mock.calls[0][1]?.signal;
+
+    expect(requestSignal).not.toBe(callerController.signal);
+    expect(requestSignal).not.toBe(timeoutController.signal);
+    callerController.abort();
+    await expect(request).rejects.toMatchObject({ name: "AbortError" });
+  });
+
+  it("leaves loading and shows feedback when the session request times out", async () => {
+    const errorToast = vi.spyOn(toast, "error");
+    const timeoutController = new AbortController();
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(timeoutController.signal);
+    const fetchMock = pendingFetch();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <UserContextProvider>
+        <SessionProbe />
+      </UserContextProvider>,
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    const timeoutError = new Error("The operation timed out");
+    timeoutError.name = "TimeoutError";
+    timeoutController.abort(timeoutError);
+
+    expect(
+      await screen.findByText("Gangguan sesi: The operation timed out"),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("session-status")).toHaveTextContent("anonymous");
+    expect(errorToast).toHaveBeenCalledWith("The operation timed out", {
+      id: "session-refresh-error",
+    });
   });
 
   it("uses the user logout endpoint and clears session state", async () => {

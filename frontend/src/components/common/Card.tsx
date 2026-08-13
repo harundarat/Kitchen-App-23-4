@@ -1,4 +1,4 @@
-import { useState, type MouseEvent } from "react";
+import { useRef, useState, type MouseEvent } from "react";
 import { Icon } from "@iconify/react";
 import BlankProfile from "../../assets/blank_profile.webp";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +24,8 @@ export interface CardProps {
 export default function Card(props: CardProps) {
   const navigate = useNavigate();
   const [alertDelete, setAlertDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const deletionInFlight = useRef(false);
 
   const handleClick = () => {
     if (props.id) {
@@ -40,7 +42,29 @@ export default function Card(props: CardProps) {
   };
   const handleDelete = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
+    if (deletionInFlight.current) return;
     setAlertDelete(true);
+  };
+  const closeDeleteDialog = () => {
+    if (!deletionInFlight.current) setAlertDelete(false);
+  };
+  const confirmDelete = async () => {
+    if (deletionInFlight.current) return;
+
+    deletionInFlight.current = true;
+    setDeleting(true);
+    try {
+      await api.delete(`/recipes/${props.id}`);
+      setAlertDelete(false);
+      toast.success("Resep berhasil dihapus");
+      props.reload?.(true);
+    } catch (error) {
+      console.error(error);
+      toast.error("Gagal menghapus resep");
+    } finally {
+      deletionInFlight.current = false;
+      setDeleting(false);
+    }
   };
 
   if (props.isLoad) {
@@ -103,6 +127,7 @@ export default function Card(props: CardProps) {
                   aria-label={`Hapus resep ${props.title ?? ""}`.trim()}
                   className="bg-accent-1 text-bg flex aspect-square w-9 items-center justify-center rounded-full p-1 shadow-md transition-opacity duration-200 group-hover:visible group-hover:opacity-100 hover:bg-red-500 lg:invisible lg:w-10 lg:opacity-0"
                   onClick={(e) => handleDelete(e)}
+                  disabled={deleting}
                 >
                   <Icon
                     className="text-lg"
@@ -142,29 +167,12 @@ export default function Card(props: CardProps) {
         open={alertDelete}
         title="Hapus resep?"
         description={`Yakin ingin menghapus "${props.title}"? Tindakan ini tidak dapat dibatalkan.`}
-        onClose={() => setAlertDelete(false)}
-        onConfirm={() =>
-          void deleteRecipe(props.id, () => setAlertDelete(false), props.reload)
-        }
+        onClose={closeDeleteDialog}
+        onConfirm={() => void confirmDelete()}
+        loading={deleting}
       />
     </>
   );
-}
-
-async function deleteRecipe(
-  recipeId: string | undefined,
-  close: () => void,
-  reload: CardProps["reload"],
-) {
-  try {
-    await api.delete(`/recipes/${recipeId}`);
-    close();
-    toast.success("Resep berhasil dihapus");
-    reload?.(true);
-  } catch (error) {
-    console.error(error);
-    toast.error("Gagal menghapus resep");
-  }
 }
 
 function formatMinute(menit: number) {

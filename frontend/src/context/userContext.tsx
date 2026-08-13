@@ -7,8 +7,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ApiError, api } from "../services/api";
+import { toast } from "react-hot-toast";
+import { ApiError, api, getErrorMessage } from "../services/api";
 import type { SessionUser } from "../types/api";
+
+const SESSION_ERROR_TOAST_ID = "session-refresh-error";
 
 export type SessionStatus = "loading" | "authenticated" | "anonymous";
 
@@ -46,22 +49,28 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
       if (signal?.aborted) return;
       setUser(data.user);
       setStatus("authenticated");
+      toast.dismiss(SESSION_ERROR_TOAST_ID);
     } catch (error) {
-      if (
-        signal?.aborted ||
-        (error instanceof Error && error.name === "AbortError")
-      ) {
-        return;
-      }
+      if (signal?.aborted) return;
+
+      const isAnonymous = error instanceof ApiError && error.status === 401;
+      const sessionFailure = isAnonymous
+        ? null
+        : error instanceof Error
+          ? error
+          : new Error("Tidak dapat terhubung ke server");
+
       setUser(null);
       setStatus("anonymous");
-      setSessionError(
-        error instanceof ApiError && error.status === 401
-          ? null
-          : error instanceof Error
-            ? error
-            : new Error("Tidak dapat terhubung ke server"),
-      );
+      setSessionError(sessionFailure);
+
+      if (sessionFailure) {
+        toast.error(getErrorMessage(error, "Tidak dapat terhubung ke server"), {
+          id: SESSION_ERROR_TOAST_ID,
+        });
+      } else {
+        toast.dismiss(SESSION_ERROR_TOAST_ID);
+      }
     }
   }, []);
 
@@ -78,6 +87,7 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setStatus("anonymous");
     setSessionError(null);
+    toast.dismiss(SESSION_ERROR_TOAST_ID);
   }, [user]);
 
   const isLogged = status === "authenticated";
