@@ -1,6 +1,6 @@
 # Admin-to-Frontend Migration Runbook
 
-Status: **Planned; implementation has not started**
+Status: **Completed 2026-08-13**
 
 Prepared: **2026-08-13**
 
@@ -1064,11 +1064,11 @@ exit gate passes.
 - [x] Representative consumer regression matrix passes.
 - [x] Environment files restored exactly.
 - [x] Phase 6 gate passes.
-- [ ] Documentation updated.
-- [ ] Standalone `admin` directory removed.
-- [ ] Final clean-install checks and audits pass.
-- [ ] Tracked `frontend/dist` rebuilt and reviewed intentionally.
-- [ ] Phase 7 gate passes.
+- [x] Documentation updated.
+- [x] Standalone `admin` directory removed.
+- [x] Final clean-install checks and audits pass.
+- [x] Tracked `frontend/dist` rebuilt and reviewed intentionally.
+- [x] Phase 7 gate passes.
 
 ## 12. Discoveries and decision log
 
@@ -1105,6 +1105,8 @@ changing the plan.
 | 2026-08-13 | Isolated Mongo acceptance passed the protected API, cascade, session, and consumer flows. | Disposable users created a recipe, another user liked/saved/reported it, and administrator deletion left recipes, nutrition, likes, saves, and reports all at zero; anonymous/user/invalid-token admin requests returned 401/403/401. | The current backend contract and cascade behavior are accepted before standalone-admin retirement. |
 | 2026-08-13 | Firebase storage was not configured in the local acceptance environment. | A real multipart upload returned the documented `503 STORAGE_NOT_CONFIGURED` response; no external credentials were invented. | Upload-only create/edit coverage relies on the automated frontend/backend tests; all non-storage full-stack cases passed. |
 | 2026-08-13 | Browser acceptance used temporary Playwright tooling outside repository dependencies. | Direct admin deep links, login return, refresh/logout, drawer/search/detail, keyboard focus, and representative consumer login/search/save/report/profile/editor flows passed in Chromium. | The repository dependency graph remains unchanged; local browser checks used `localhost:5173`, matching the configured CORS origin. |
+| 2026-08-13 | Phase 7 removed the standalone `admin` source only after the accepted checkpoint. | `test ! -d admin` passes; root/frontend documentation now describes `/admin/login`, seeding, one active role, validation, and backend-first deployment. | The frontend is the sole browser application and the retirement remains isolated in its own final commit. |
+| 2026-08-13 | Final clean installs, checks, audits, and tracked distribution rebuild passed. | Backend check/build/audit and frontend test/typecheck/lint/format/build/audit all passed; the new distribution includes lazy admin chunks. | The generated `frontend/dist` update is intentional; remaining `stepDescription` hits are consumer multipart compatibility only. |
 | YYYY-MM-DD | _Add new discovery/decision_                                     | _Evidence_                                            | _Plan effect_                                                                         |
 
 ## 13. Completion criteria
