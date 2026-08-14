@@ -187,6 +187,7 @@ describe("administrator routes and shell", () => {
       email: "admin@example.test",
       password: "secret-password",
     });
+    expect(onRefresh).toHaveBeenCalledTimes(1);
     expect(onRefresh).toHaveBeenCalledWith({ notifyOtherTabs: true });
     expect(successToast).toHaveBeenCalledWith("Login administrator berhasil");
     expect(await screen.findByText("Detail resep admin")).toBeInTheDocument();

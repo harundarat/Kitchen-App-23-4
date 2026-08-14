@@ -97,13 +97,12 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
         const data = await api.get<{ user: SessionUser }>("/auth", { signal });
         if (signal?.aborted) return { user: userRef.current, error: null };
         if (generation !== requestedRefreshGeneration.current) {
-          return { user: data.user, error: null };
+          return { user: userRef.current, error: null };
         }
 
         commitPrincipal(data.user);
         setStatus("authenticated");
         setSessionError(null);
-        activationNeedsRefresh.current = false;
         toast.dismiss(SESSION_ERROR_TOAST_ID);
         return { user: data.user, error: null };
       } catch (error) {
@@ -120,7 +119,6 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
           commitPrincipal(null);
           setStatus("anonymous");
           setSessionError(null);
-          activationNeedsRefresh.current = false;
           toast.dismiss(SESSION_ERROR_TOAST_ID);
           return { user: null, error: null };
         }
@@ -200,6 +198,9 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
+    activationNeedsRefresh.current =
+      document.visibilityState === "hidden" || !document.hasFocus();
+
     const markInactive = () => {
       activationNeedsRefresh.current = true;
     };
@@ -237,6 +238,8 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
     if (user) {
       await api.post(user.role === "admin" ? "/admin/logout" : "/auth/logout");
     }
+    ++requestedRefreshGeneration.current;
+    pendingRefresh.current = undefined;
     commitPrincipal(null);
     setStatus("anonymous");
     setSessionError(null);

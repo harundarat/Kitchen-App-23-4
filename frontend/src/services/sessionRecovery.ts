@@ -20,15 +20,12 @@ const invalidationListeners: Record<
 };
 
 const sessionChangeListeners = new Set<SessionChangeListener>();
-let sessionChangeChannel: BroadcastChannel | null | undefined;
+let sessionChangeChannel: BroadcastChannel | undefined;
 
 function getSessionChangeChannel(): BroadcastChannel | null {
-  if (sessionChangeChannel !== undefined) return sessionChangeChannel;
+  if (sessionChangeChannel) return sessionChangeChannel;
 
-  if (typeof BroadcastChannel === "undefined") {
-    sessionChangeChannel = null;
-    return sessionChangeChannel;
-  }
+  if (typeof BroadcastChannel === "undefined") return null;
 
   try {
     sessionChangeChannel = new BroadcastChannel(SESSION_CHANGE_CHANNEL_NAME);
@@ -37,7 +34,7 @@ function getSessionChangeChannel(): BroadcastChannel | null {
       sessionChangeListeners.forEach((listener) => listener());
     });
   } catch {
-    sessionChangeChannel = null;
+    return null;
   }
 
   return sessionChangeChannel;

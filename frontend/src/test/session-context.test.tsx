@@ -7,6 +7,7 @@ import {
   afterAll,
   afterEach,
   beforeAll,
+  beforeEach,
   describe,
   expect,
   it,
@@ -15,6 +16,7 @@ import {
 import { RequireAdmin, RequireUser } from "../components/layouts/RequireRole";
 import { UserContextProvider, useUser } from "../context/userContext";
 import Login from "../pages/Login";
+import AdminLogin from "../pages/admin/AdminLogin";
 import { api, apiRequest } from "../services/api";
 import { adminService } from "../services/admin";
 import {
@@ -177,6 +179,26 @@ function StatefulSessionProbe() {
   );
 }
 
+function SessionRefreshLogoutProbe() {
+  const { logout, refreshSession, status, user } = useUser();
+
+  return (
+    <>
+      <p data-testid="session-status">{status}</p>
+      <p data-testid="session-user">{user?.username ?? "none"}</p>
+      <button type="button" onClick={() => void refreshSession()}>
+        Mulai revalidasi
+      </button>
+      <button
+        type="button"
+        onClick={() => void logout().catch(() => undefined)}
+      >
+        Logout saat revalidasi
+      </button>
+    </>
+  );
+}
+
 function ProtectedAdminProbe() {
   return (
     <button
@@ -236,6 +258,10 @@ describe("UserContextProvider", () => {
     });
   });
 
+  beforeEach(() => {
+    vi.spyOn(document, "hasFocus").mockReturnValue(true);
+  });
+
   afterAll(() => {
     if (originalBroadcastChannel) {
       Object.defineProperty(globalThis, "BroadcastChannel", {
@@ -255,6 +281,79 @@ describe("UserContextProvider", () => {
     localStorage.clear();
     sessionStorage.clear();
     FakeBroadcastChannel.postedMessages = [];
+  });
+
+  it("revalidates on first activation when mounted inactive without BroadcastChannel", async () => {
+    const broadcastChannelDescriptor = Object.getOwnPropertyDescriptor(
+      globalThis,
+      "BroadcastChannel",
+    );
+    const visibilityDescriptor = Object.getOwnPropertyDescriptor(
+      document,
+      "visibilityState",
+    );
+    const fetchMock = setupFetch(
+      sessionResponse("user", "koki-a", "user-a"),
+      sessionResponse("user", "koki-b", "user-b"),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    vi.mocked(document.hasFocus).mockReturnValue(false);
+
+    try {
+      Object.defineProperty(globalThis, "BroadcastChannel", {
+        configurable: true,
+        value: undefined,
+        writable: true,
+      });
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+
+      render(
+        <UserContextProvider>
+          <SessionProbe />
+        </UserContextProvider>,
+      );
+      await screen.findByText("Sesi untuk koki-a: pengguna");
+      expect(fetchMock).toHaveBeenCalledOnce();
+
+      vi.mocked(document.hasFocus).mockReturnValue(true);
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      act(() => {
+        document.dispatchEvent(new Event("visibilitychange"));
+        window.dispatchEvent(new Event("focus"));
+      });
+
+      expect(
+        await screen.findByText("Sesi untuk koki-b: pengguna"),
+      ).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      if (broadcastChannelDescriptor) {
+        Object.defineProperty(
+          globalThis,
+          "BroadcastChannel",
+          broadcastChannelDescriptor,
+        );
+      } else {
+        delete (globalThis as { BroadcastChannel?: unknown }).BroadcastChannel;
+      }
+      if (visibilityDescriptor) {
+        Object.defineProperty(
+          document,
+          "visibilityState",
+          visibilityDescriptor,
+        );
+      } else {
+        delete (document as { visibilityState?: string }).visibilityState;
+      }
+    }
   });
 
   it("maps a resolved user session without storing a token in web storage", async () => {
@@ -628,6 +727,55 @@ describe("UserContextProvider", () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
+  it("does not let a refresh started before logout restore the old principal", async () => {
+    let resolveStaleAuth!: (response: Response) => void;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(sessionResponse("user", "koki-a", "user-a"))
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveStaleAuth = resolve;
+          }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const interaction = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <SessionRefreshLogoutProbe />
+      </UserContextProvider>,
+    );
+    await screen.findByText("koki-a");
+
+    await interaction.click(
+      screen.getByRole("button", { name: "Mulai revalidasi" }),
+    );
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    await interaction.click(
+      screen.getByRole("button", { name: "Logout saat revalidasi" }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("session-status")).toHaveTextContent(
+        "anonymous",
+      );
+    });
+    expect(screen.getByTestId("session-user")).toHaveTextContent("none");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
+    await act(async () => {
+      resolveStaleAuth(sessionResponse("user", "koki-a", "user-a"));
+    });
+
+    expect(screen.getByTestId("session-status")).toHaveTextContent("anonymous");
+    expect(screen.getByTestId("session-user")).toHaveTextContent("none");
+  });
+
   it("preserves but quarantines a confirmed principal when revalidation has a server failure", async () => {
     const fetchMock = setupFetch(
       sessionResponse("user", "koki-a", "user-a"),
@@ -650,6 +798,43 @@ describe("UserContextProvider", () => {
 
     act(() => reportExternalSessionChange());
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    expect(screen.getByTestId("session-user")).toHaveTextContent("koki-a");
+    expect(screen.getByTestId("session-status")).toHaveTextContent("loading");
+    expect(screen.queryByText("Sesi anonim")).not.toBeInTheDocument();
+
+    act(() => window.dispatchEvent(new Event("focus")));
+    expect(
+      await screen.findByText("Sesi untuk koki-b: pengguna"),
+    ).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("preserves but quarantines a confirmed principal after a network rejection", async () => {
+    const errorToast = vi.spyOn(toast, "error");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(sessionResponse("user", "koki-a", "user-a"))
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValueOnce(sessionResponse("user", "koki-b", "user-b"));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+
+    render(
+      <UserContextProvider>
+        <SessionProbe />
+      </UserContextProvider>,
+    );
+    await screen.findByText("Sesi untuk koki-a: pengguna");
+
+    act(() => reportExternalSessionChange());
+    await waitFor(() => {
+      expect(errorToast).toHaveBeenCalledWith("Failed to fetch", {
+        id: "session-refresh-error",
+      });
+    });
 
     expect(screen.getByTestId("session-user")).toHaveTextContent("koki-a");
     expect(screen.getByTestId("session-status")).toHaveTextContent("loading");
@@ -781,6 +966,100 @@ describe("UserContextProvider", () => {
     await interaction.click(screen.getByRole("button", { name: "Masuk" }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(FakeBroadcastChannel.postedMessages).toEqual([]);
+  });
+
+  it("publishes exactly one opaque change after administrator login", async () => {
+    const fetchMock = setupFetch(
+      new Response(JSON.stringify({ error: "Authentication required" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+      new Response(JSON.stringify({ message: "Logged in" }), {
+        headers: { "Content-Type": "application/json" },
+      }),
+      sessionResponse("admin", "pengelola", "admin-1"),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const interaction = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <MemoryRouter initialEntries={["/admin/login"]}>
+          <Routes>
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/users" element={<p>Daftar pengguna admin</p>} />
+          </Routes>
+        </MemoryRouter>
+      </UserContextProvider>,
+    );
+    await screen.findByLabelText("Email administrator");
+    await interaction.type(
+      screen.getByLabelText("Email administrator"),
+      "admin@example.test",
+    );
+    await interaction.type(
+      screen.getByLabelText("Kata sandi"),
+      "secret-password",
+    );
+    await interaction.click(
+      screen.getByRole("button", { name: "Masuk sebagai admin" }),
+    );
+
+    expect(
+      await screen.findByText("Daftar pengguna admin"),
+    ).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(FakeBroadcastChannel.postedMessages).toEqual([
+      SESSION_CHANGED_MESSAGE,
+    ]);
+  });
+
+  it("does not publish when administrator login fails", async () => {
+    const fetchMock = setupFetch(
+      new Response(JSON.stringify({ error: "Authentication required" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+      new Response(JSON.stringify({ error: "Invalid credentials" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const interaction = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <MemoryRouter initialEntries={["/admin/login"]}>
+          <Routes>
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/users" element={<p>Daftar pengguna admin</p>} />
+          </Routes>
+        </MemoryRouter>
+      </UserContextProvider>,
+    );
+    await screen.findByLabelText("Email administrator");
+    await interaction.type(
+      screen.getByLabelText("Email administrator"),
+      "admin@example.test",
+    );
+    await interaction.type(
+      screen.getByLabelText("Kata sandi"),
+      "wrong-password",
+    );
+    await interaction.click(
+      screen.getByRole("button", { name: "Masuk sebagai admin" }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(
+      screen.getByRole("button", { name: "Masuk sebagai admin" }),
+    ).toBeEnabled();
     expect(FakeBroadcastChannel.postedMessages).toEqual([]);
   });
 
