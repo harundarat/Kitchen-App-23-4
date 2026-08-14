@@ -1,24 +1,84 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { RequireAdmin, RequireUser } from "../components/layouts/RequireRole";
 import { UserContextProvider, useUser } from "../context/userContext";
+import Login from "../pages/Login";
 import { api, apiRequest } from "../services/api";
 import { adminService } from "../services/admin";
 import {
   CURRENT_USER_SESSION_VALIDATION,
+  SESSION_CHANGE_CHANNEL_NAME,
+  SESSION_CHANGED_MESSAGE,
   USER_SESSION_VALIDATION,
 } from "../services/sessionRecovery";
+
+type ChannelListener = (event: MessageEvent) => void;
+
+class FakeBroadcastChannel {
+  static channels = new Map<string, Set<FakeBroadcastChannel>>();
+  static postedMessages: unknown[] = [];
+
+  readonly name: string;
+  private readonly listeners = new Set<ChannelListener>();
+
+  constructor(name: string) {
+    this.name = name;
+    const channels = FakeBroadcastChannel.channels.get(name) ?? new Set();
+    channels.add(this);
+    FakeBroadcastChannel.channels.set(name, channels);
+  }
+
+  addEventListener(type: string, listener: ChannelListener) {
+    if (type === "message") this.listeners.add(listener);
+  }
+
+  postMessage(data: unknown) {
+    FakeBroadcastChannel.postedMessages.push(data);
+    FakeBroadcastChannel.channels.get(this.name)?.forEach((channel) => {
+      if (channel === this) return;
+      channel.listeners.forEach((listener) =>
+        listener(new MessageEvent("message", { data })),
+      );
+    });
+  }
+
+  close() {
+    FakeBroadcastChannel.channels.get(this.name)?.delete(this);
+  }
+}
+
+const originalBroadcastChannel = globalThis.BroadcastChannel;
+
+function reportExternalMessage(message: unknown) {
+  const channel = new FakeBroadcastChannel(SESSION_CHANGE_CHANNEL_NAME);
+  channel.postMessage(message);
+  channel.close();
+}
+
+function reportExternalSessionChange() {
+  reportExternalMessage(SESSION_CHANGED_MESSAGE);
+}
 
 function sessionResponse(
   role: "user" | "admin" = "user",
   username = "koki",
+  id = "user-1",
 ): Response {
   return new Response(
     JSON.stringify({
-      user: { id: "user-1", username, role },
+      user: { id, username, role },
     }),
     { headers: { "Content-Type": "application/json" } },
   );
@@ -38,6 +98,7 @@ function SessionProbe() {
   return (
     <>
       <p data-testid="session-status">{status}</p>
+      <p data-testid="session-user">{user?.username ?? "none"}</p>
       {status === "loading" ? (
         <p>Memuat sesi</p>
       ) : sessionError ? (
@@ -50,7 +111,10 @@ function SessionProbe() {
             Sesi untuk {user.username}: {isUser ? "pengguna" : "administrator"}
           </p>
           <p>Admin: {String(isAdmin)}</p>
-          <button type="button" onClick={() => void logout()}>
+          <button
+            type="button"
+            onClick={() => void logout().catch(() => undefined)}
+          >
             Keluar
           </button>
         </>
@@ -92,6 +156,23 @@ function SessionProbe() {
       >
         Kirim permintaan pengguna
       </button>
+    </>
+  );
+}
+
+function StatefulSessionProbe() {
+  const { user } = useUser();
+  const [draft, setDraft] = useState("");
+
+  return (
+    <>
+      <p>Principal aktif: {user?.username ?? "anonim"}</p>
+      <label htmlFor="session-draft">Draft</label>
+      <input
+        id="session-draft"
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+      />
     </>
   );
 }
@@ -147,12 +228,33 @@ function setupFetch(...responses: Response[]) {
 }
 
 describe("UserContextProvider", () => {
+  beforeAll(() => {
+    Object.defineProperty(globalThis, "BroadcastChannel", {
+      configurable: true,
+      value: FakeBroadcastChannel,
+      writable: true,
+    });
+  });
+
+  afterAll(() => {
+    if (originalBroadcastChannel) {
+      Object.defineProperty(globalThis, "BroadcastChannel", {
+        configurable: true,
+        value: originalBroadcastChannel,
+        writable: true,
+      });
+    } else {
+      delete (globalThis as { BroadcastChannel?: unknown }).BroadcastChannel;
+    }
+  });
+
   afterEach(() => {
     toast.dismiss();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     localStorage.clear();
     sessionStorage.clear();
+    FakeBroadcastChannel.postedMessages = [];
   });
 
   it("maps a resolved user session without storing a token in web storage", async () => {
@@ -194,6 +296,492 @@ describe("UserContextProvider", () => {
       await screen.findByText("Sesi untuk koki: administrator"),
     ).toBeInTheDocument();
     expect(screen.getByText("Admin: true")).toBeInTheDocument();
+  });
+
+  it.each([
+    ["consumer", "user", "koki-a", "user-a", "koki-b", "user-b"],
+    ["administrator", "admin", "admin-a", "admin-a", "admin-b", "admin-b"],
+  ] as const)(
+    "hydrates a same-role replacement %s and resets stale child state",
+    async (_description, role, firstName, firstId, nextName, nextId) => {
+      const fetchMock = setupFetch(
+        sessionResponse(role, firstName, firstId),
+        sessionResponse(role, nextName, nextId),
+      );
+      vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+        new AbortController().signal,
+      );
+      const interaction = userEvent.setup();
+
+      render(
+        <UserContextProvider>
+          <StatefulSessionProbe />
+        </UserContextProvider>,
+      );
+
+      expect(
+        await screen.findByText(`Principal aktif: ${firstName}`),
+      ).toBeInTheDocument();
+      await interaction.type(screen.getByLabelText("Draft"), "draft lama");
+
+      act(() => reportExternalSessionChange());
+
+      expect(
+        await screen.findByText(`Principal aktif: ${nextName}`),
+      ).toBeInTheDocument();
+      expect(screen.getByLabelText("Draft")).toHaveValue("");
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it("does not reset child state when revalidation confirms the same principal", async () => {
+    const fetchMock = setupFetch(sessionResponse(), sessionResponse());
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const interaction = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <StatefulSessionProbe />
+      </UserContextProvider>,
+    );
+
+    await screen.findByText("Principal aktif: koki");
+    await interaction.type(screen.getByLabelText("Draft"), "tetap ada");
+    act(() => reportExternalSessionChange());
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    expect(screen.getByLabelText("Draft")).toHaveValue("tetap ada");
+  });
+
+  it("removes a stale consumer route when another tab installs an admin session", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse(),
+      sessionResponse("admin", "pengelola", "admin-1"),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+
+    render(
+      <UserContextProvider>
+        <MemoryRouter initialEntries={["/profile/koki"]}>
+          <Routes>
+            <Route element={<RequireUser />}>
+              <Route path="/profile/koki" element={<p>Profil terlindungi</p>} />
+            </Route>
+            <Route path="/" element={<p>Beranda konsumen</p>} />
+          </Routes>
+        </MemoryRouter>
+      </UserContextProvider>,
+    );
+
+    await screen.findByText("Profil terlindungi");
+    act(() => reportExternalSessionChange());
+
+    expect(await screen.findByText("Beranda konsumen")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("removes stale admin state when another tab installs a consumer session", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse("admin", "pengelola", "admin-1"),
+      sessionResponse("user", "koki", "user-1"),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+
+    render(
+      <UserContextProvider>
+        <MemoryRouter initialEntries={["/admin/users"]}>
+          <Routes>
+            <Route element={<RequireAdmin />}>
+              <Route path="/admin/users" element={<p>Data admin lama</p>} />
+            </Route>
+            <Route path="/admin/login" element={<p>Login administrator</p>} />
+          </Routes>
+        </MemoryRouter>
+      </UserContextProvider>,
+    );
+
+    await screen.findByText("Data admin lama");
+    act(() => reportExternalSessionChange());
+
+    expect(await screen.findByText("Login administrator")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("maps a logout notification in another tab to an anonymous session", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse(),
+      new Response(JSON.stringify({ error: "Authentication required" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+
+    render(
+      <UserContextProvider>
+        <SessionProbe />
+      </UserContextProvider>,
+    );
+
+    await screen.findByText("Sesi untuk koki: pengguna");
+    act(() => reportExternalSessionChange());
+
+    expect(await screen.findByText("Sesi anonim")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("coalesces paired visibility and focus activation into one refresh", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse("user", "koki-a", "user-a"),
+      sessionResponse("user", "koki-b", "user-b"),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const visibilityDescriptor = Object.getOwnPropertyDescriptor(
+      document,
+      "visibilityState",
+    );
+
+    try {
+      render(
+        <UserContextProvider>
+          <SessionProbe />
+        </UserContextProvider>,
+      );
+      await screen.findByText("Sesi untuk koki-a: pengguna");
+
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+      act(() => {
+        window.dispatchEvent(new Event("blur"));
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      act(() => {
+        document.dispatchEvent(new Event("visibilitychange"));
+        window.dispatchEvent(new Event("focus"));
+      });
+
+      expect(
+        await screen.findByText("Sesi untuk koki-b: pengguna"),
+      ).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      if (visibilityDescriptor) {
+        Object.defineProperty(
+          document,
+          "visibilityState",
+          visibilityDescriptor,
+        );
+      } else {
+        delete (document as { visibilityState?: string }).visibilityState;
+      }
+    }
+  });
+
+  it("does not refresh when focus never genuinely left", async () => {
+    const fetchMock = setupFetch(sessionResponse());
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+
+    render(
+      <UserContextProvider>
+        <SessionProbe />
+      </UserContextProvider>,
+    );
+    await screen.findByText("Sesi untuk koki: pengguna");
+
+    act(() => window.dispatchEvent(new Event("focus")));
+    await act(async () => Promise.resolve());
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("does not repeat activation refresh after a backgrounded tab already synchronized", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse("user", "koki-a", "user-a"),
+      sessionResponse("user", "koki-b", "user-b"),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const visibilityDescriptor = Object.getOwnPropertyDescriptor(
+      document,
+      "visibilityState",
+    );
+
+    try {
+      render(
+        <UserContextProvider>
+          <SessionProbe />
+        </UserContextProvider>,
+      );
+      await screen.findByText("Sesi untuk koki-a: pengguna");
+
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+      act(() => {
+        window.dispatchEvent(new Event("blur"));
+        document.dispatchEvent(new Event("visibilitychange"));
+        reportExternalSessionChange();
+      });
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      act(() => {
+        document.dispatchEvent(new Event("visibilitychange"));
+        window.dispatchEvent(new Event("focus"));
+      });
+      await act(async () => Promise.resolve());
+
+      expect(screen.getByTestId("session-user")).toHaveTextContent("koki-b");
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      if (visibilityDescriptor) {
+        Object.defineProperty(
+          document,
+          "visibilityState",
+          visibilityDescriptor,
+        );
+      } else {
+        delete (document as { visibilityState?: string }).visibilityState;
+      }
+    }
+  });
+
+  it("ignores unrelated cross-tab channel messages", async () => {
+    const fetchMock = setupFetch(sessionResponse());
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+
+    render(
+      <UserContextProvider>
+        <SessionProbe />
+      </UserContextProvider>,
+    );
+    await screen.findByText("Sesi untuk koki: pengguna");
+
+    act(() => reportExternalMessage({ type: "session-changed" }));
+    await act(async () => Promise.resolve());
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("runs one trailing refresh and ignores a superseded in-flight response", async () => {
+    let resolveSuperseded!: (response: Response) => void;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(sessionResponse("user", "koki-a", "user-a"))
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveSuperseded = resolve;
+          }),
+      )
+      .mockResolvedValueOnce(sessionResponse("user", "koki-c", "user-c"));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+
+    render(
+      <UserContextProvider>
+        <SessionProbe />
+      </UserContextProvider>,
+    );
+    await screen.findByText("Sesi untuk koki-a: pengguna");
+
+    act(() => reportExternalSessionChange());
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    act(() => reportExternalSessionChange());
+    await act(async () => {
+      resolveSuperseded(sessionResponse("user", "koki-b", "user-b"));
+    });
+
+    expect(
+      await screen.findByText("Sesi untuk koki-c: pengguna"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Sesi untuk koki-b: pengguna"),
+    ).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("preserves but quarantines a confirmed principal when revalidation has a server failure", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse("user", "koki-a", "user-a"),
+      new Response(JSON.stringify({ error: "Gateway unavailable" }), {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      }),
+      sessionResponse("user", "koki-b", "user-b"),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+
+    render(
+      <UserContextProvider>
+        <SessionProbe />
+      </UserContextProvider>,
+    );
+    await screen.findByText("Sesi untuk koki-a: pengguna");
+
+    act(() => reportExternalSessionChange());
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    expect(screen.getByTestId("session-user")).toHaveTextContent("koki-a");
+    expect(screen.getByTestId("session-status")).toHaveTextContent("loading");
+    expect(screen.queryByText("Sesi anonim")).not.toBeInTheDocument();
+
+    act(() => window.dispatchEvent(new Event("focus")));
+    expect(
+      await screen.findByText("Sesi untuk koki-b: pengguna"),
+    ).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("hydrates a renamed principal on focus and resets identity-bound state", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse("user", "koki", "user-1"),
+      sessionResponse("user", "koki-baru", "user-1"),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const interaction = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <StatefulSessionProbe />
+      </UserContextProvider>,
+    );
+    await screen.findByText("Principal aktif: koki");
+    await interaction.type(screen.getByLabelText("Draft"), "draft lama");
+
+    act(() => {
+      window.dispatchEvent(new Event("blur"));
+      window.dispatchEvent(new Event("focus"));
+    });
+
+    expect(
+      await screen.findByText("Principal aktif: koki-baru"),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Draft")).toHaveValue("");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("clears a deleted principal when a focused tab revalidates", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse(),
+      new Response(JSON.stringify({ error: "Authentication required" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+
+    render(
+      <UserContextProvider>
+        <SessionProbe />
+      </UserContextProvider>,
+    );
+    await screen.findByText("Sesi untuk koki: pengguna");
+
+    act(() => {
+      window.dispatchEvent(new Event("blur"));
+      window.dispatchEvent(new Event("focus"));
+    });
+
+    expect(await screen.findByText("Sesi anonim")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("publishes an opaque change after consumer login without using web storage", async () => {
+    const fetchMock = setupFetch(
+      new Response(JSON.stringify({ error: "Authentication required" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+      new Response(JSON.stringify({ message: "Logged in" }), {
+        headers: { "Content-Type": "application/json" },
+      }),
+      sessionResponse(),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const interaction = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <Login />
+      </UserContextProvider>,
+    );
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    await interaction.type(screen.getByLabelText("Email"), "user@example.test");
+    await interaction.type(screen.getByLabelText("Password"), "password");
+    await interaction.click(screen.getByRole("button", { name: "Masuk" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+    expect(FakeBroadcastChannel.postedMessages).toEqual([
+      SESSION_CHANGED_MESSAGE,
+    ]);
+    expect(localStorage).toHaveLength(0);
+    expect(sessionStorage).toHaveLength(0);
+  });
+
+  it("does not publish when consumer login fails", async () => {
+    const fetchMock = setupFetch(
+      new Response(JSON.stringify({ error: "Authentication required" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+      new Response(JSON.stringify({ error: "Invalid credentials" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const interaction = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <Login />
+      </UserContextProvider>,
+    );
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    await interaction.type(screen.getByLabelText("Email"), "user@example.test");
+    await interaction.type(screen.getByLabelText("Password"), "wrong-password");
+    await interaction.click(screen.getByRole("button", { name: "Masuk" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(FakeBroadcastChannel.postedMessages).toEqual([]);
   });
 
   it("refreshes stale shared admin state after a protected request is unauthorized", async () => {
@@ -592,6 +1180,36 @@ describe("UserContextProvider", () => {
       expect.stringMatching(/\/api\/auth\/logout$/),
       expect.objectContaining({ credentials: "include", method: "POST" }),
     );
+    expect(FakeBroadcastChannel.postedMessages).toEqual([
+      SESSION_CHANGED_MESSAGE,
+    ]);
+  });
+
+  it("retains the confirmed session and does not publish when logout fails", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse(),
+      new Response(JSON.stringify({ error: "Gateway unavailable" }), {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const user = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <SessionProbe />
+      </UserContextProvider>,
+    );
+
+    await screen.findByText("Sesi untuk koki: pengguna");
+    await user.click(screen.getByRole("button", { name: "Keluar" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    expect(screen.getByText("Sesi untuk koki: pengguna")).toBeInTheDocument();
+    expect(FakeBroadcastChannel.postedMessages).toEqual([]);
   });
 
   it("uses the administrator logout endpoint and clears session state", async () => {
@@ -618,5 +1236,8 @@ describe("UserContextProvider", () => {
       expect.stringMatching(/\/api\/admin\/logout$/),
       expect.objectContaining({ credentials: "include", method: "POST" }),
     );
+    expect(FakeBroadcastChannel.postedMessages).toEqual([
+      SESSION_CHANGED_MESSAGE,
+    ]);
   });
 });

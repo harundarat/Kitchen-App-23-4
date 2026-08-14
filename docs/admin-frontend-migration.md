@@ -269,6 +269,19 @@ The administrator flow is:
 7. Call `POST /api/admin/logout`, refresh/reset session state, and return to
    `/admin/login`.
 
+Because the cookie is shared while React state is tab-local, successful login
+and logout flows publish an opaque `session-changed` message through a shared
+`BroadcastChannel`. The message never contains a token or principal data;
+every receiving `UserContext` resolves the active principal through canonical
+`GET /api/auth`. Tabs also revalidate once after a genuine blur/hidden and
+focus/visible transition so suspended tabs, missed messages, cookie expiry,
+and principal changes outside the current frontend recover before protected
+interaction. Session checks are single-flight with one trailing refresh for a
+newer signal, and stale responses cannot overwrite newer state. A confirmed
+principal is cleared only by a definitive 401; network and 5xx failures retain
+the last confirmed principal without authorizing protected interaction until a
+later check succeeds.
+
 Frontend route guards are navigation UX, not the security boundary. Every admin
 API route remains protected on the backend.
 
@@ -1107,6 +1120,7 @@ changing the plan.
 | 2026-08-13 | Browser acceptance used temporary Playwright tooling outside repository dependencies. | Direct admin deep links, login return, refresh/logout, drawer/search/detail, keyboard focus, and representative consumer login/search/save/report/profile/editor flows passed in Chromium. | The repository dependency graph remains unchanged; local browser checks used `localhost:5173`, matching the configured CORS origin. |
 | 2026-08-13 | Phase 7 removed the standalone `admin` source only after the accepted checkpoint. | `test ! -d admin` passes; root/frontend documentation now describes `/admin/login`, seeding, one active role, validation, and backend-first deployment. | The frontend is the sole browser application and the retirement remains isolated in its own final commit. |
 | 2026-08-13 | Final clean installs, checks, audits, and tracked distribution rebuild passed. | Backend check/build/audit and frontend test/typecheck/lint/format/build/audit all passed; the new distribution includes lazy admin chunks. | The generated `frontend/dist` update is intentional; remaining `stepDescription` hits are consumer multipart compatibility only. |
+| 2026-08-14 | Shared-cookie session changes use an opaque cross-tab event. | Focused replacement and recovery tests pass.         | UserContext revalidates canonically and resets changed principals only.               |
 | YYYY-MM-DD | _Add new discovery/decision_                                     | _Evidence_                                            | _Plan effect_                                                                         |
 
 ## 13. Completion criteria

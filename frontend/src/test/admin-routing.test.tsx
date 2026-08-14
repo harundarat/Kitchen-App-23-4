@@ -79,14 +79,17 @@ function renderAdminLayout(value: SessionValue) {
 
 function AdminLoginHarness({
   initialRole = null,
+  onRefresh,
   refreshResult,
 }: {
   initialRole?: Role;
+  onRefresh?: (options: Parameters<SessionValue["refreshSession"]>[0]) => void;
   refreshResult?: SessionRefreshResult;
 }) {
   const [role, setRole] = useState<Role>(initialRole);
   const value = sessionValue(role, role ? "authenticated" : "anonymous", {
-    refreshSession: async () => {
+    refreshSession: async (options) => {
+      onRefresh?.(options);
       const result = refreshResult ?? {
         user: {
           id: "admin-1",
@@ -167,8 +170,9 @@ describe("administrator routes and shell", () => {
   it("returns to a protected deep link after administrator login", async () => {
     adminServiceMock.login.mockResolvedValue({});
     const successToast = vi.spyOn(toast, "success");
+    const onRefresh = vi.fn();
     const user = userEvent.setup();
-    render(<AdminLoginHarness />);
+    render(<AdminLoginHarness onRefresh={onRefresh} />);
 
     await user.type(
       screen.getByLabelText("Email administrator"),
@@ -183,6 +187,7 @@ describe("administrator routes and shell", () => {
       email: "admin@example.test",
       password: "secret-password",
     });
+    expect(onRefresh).toHaveBeenCalledWith({ notifyOtherTabs: true });
     expect(successToast).toHaveBeenCalledWith("Login administrator berhasil");
     expect(await screen.findByText("Detail resep admin")).toBeInTheDocument();
   });
@@ -257,8 +262,9 @@ describe("administrator routes and shell", () => {
 
   it("keeps failed admin login in place and warns when replacing a user session", async () => {
     adminServiceMock.login.mockRejectedValue(new Error("Kredensial salah"));
+    const onRefresh = vi.fn();
     const user = userEvent.setup();
-    render(<AdminLoginHarness initialRole="user" />);
+    render(<AdminLoginHarness initialRole="user" onRefresh={onRefresh} />);
 
     expect(
       screen.getByText(/akan menggantikan sesi pengguna saat ini/i),
@@ -278,6 +284,7 @@ describe("administrator routes and shell", () => {
       ).toBeEnabled();
     });
     expect(screen.getByLabelText("Email administrator")).toBeInTheDocument();
+    expect(onRefresh).not.toHaveBeenCalled();
   });
 
   it("logs out from the admin shell and removes protected content", async () => {

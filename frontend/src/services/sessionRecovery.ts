@@ -6,6 +6,10 @@ export interface SessionValidation {
 }
 
 type SessionInvalidationListener = () => void;
+type SessionChangeListener = () => void;
+
+export const SESSION_CHANGE_CHANNEL_NAME = "kitchencraft:session";
+export const SESSION_CHANGED_MESSAGE = "session-changed";
 
 const invalidationListeners: Record<
   SessionRole,
@@ -14,6 +18,30 @@ const invalidationListeners: Record<
   user: new Set(),
   admin: new Set(),
 };
+
+const sessionChangeListeners = new Set<SessionChangeListener>();
+let sessionChangeChannel: BroadcastChannel | null | undefined;
+
+function getSessionChangeChannel(): BroadcastChannel | null {
+  if (sessionChangeChannel !== undefined) return sessionChangeChannel;
+
+  if (typeof BroadcastChannel === "undefined") {
+    sessionChangeChannel = null;
+    return sessionChangeChannel;
+  }
+
+  try {
+    sessionChangeChannel = new BroadcastChannel(SESSION_CHANGE_CHANNEL_NAME);
+    sessionChangeChannel.addEventListener("message", (event) => {
+      if (event.data !== SESSION_CHANGED_MESSAGE) return;
+      sessionChangeListeners.forEach((listener) => listener());
+    });
+  } catch {
+    sessionChangeChannel = null;
+  }
+
+  return sessionChangeChannel;
+}
 
 export const USER_SESSION_VALIDATION = {
   role: "user",
@@ -40,4 +68,22 @@ export function subscribeToSessionInvalidations(
 
 export function reportSessionInvalidation(role: SessionRole): void {
   invalidationListeners[role].forEach((listener) => listener());
+}
+
+export function subscribeToSessionChanges(
+  listener: SessionChangeListener,
+): () => void {
+  sessionChangeListeners.add(listener);
+  getSessionChangeChannel();
+  return () => {
+    sessionChangeListeners.delete(listener);
+  };
+}
+
+export function notifySessionChanged(): void {
+  try {
+    getSessionChangeChannel()?.postMessage(SESSION_CHANGED_MESSAGE);
+  } catch {
+    // Focus and visibility revalidation remain the correctness fallback.
+  }
 }

@@ -30,7 +30,7 @@ export default function Login({
       // setIsLogged(true);
       toast.success("Login berhasil");
       setFormData({ email: "", password: "" });
-      await refreshSession();
+      await refreshSession({ notifyOtherTabs: true });
     } catch (error) {
       toast.error(getErrorMessage(error, "Login gagal"));
     } finally {

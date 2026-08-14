@@ -45,7 +45,9 @@ export default function AdminLogin() {
     try {
       setSubmitting(true);
       await adminService.login(form);
-      const refreshedSession = await refreshSession();
+      const refreshedSession = await refreshSession({
+        notifyOtherTabs: true,
+      });
       if (refreshedSession.user?.role !== "admin") {
         if (!refreshedSession.error) {
           toast.error("Sesi administrator tidak dapat dikonfirmasi");
