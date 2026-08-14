@@ -1,7 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import AdminLayout from "./components/layouts/AdminLayout";
 import {
   ConsumerEditorLayout,
   ConsumerLayout,
@@ -10,6 +9,7 @@ import { RequireAdmin, RequireUser } from "./components/layouts/RequireRole";
 import { UserContextProvider } from "./context/userContext";
 
 const About = lazy(() => import("./pages/About"));
+const AdminLayout = lazy(() => import("./components/layouts/AdminLayout"));
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const AdminNotFound = lazy(() => import("./pages/admin/AdminNotFound"));
 const AdminRecipeDetail = lazy(() => import("./pages/admin/AdminRecipeDetail"));

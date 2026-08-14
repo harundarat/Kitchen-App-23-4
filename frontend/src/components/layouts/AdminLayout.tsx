@@ -56,6 +56,7 @@ function AdminNavigation({ collapsed = false, onNavigate }: NavigationProps) {
                 <NavLink
                   to={item.to}
                   onClick={onNavigate}
+                  aria-label={collapsed ? item.label : undefined}
                   className={({ isActive }) =>
                     `focus-visible:outline-primary flex items-center gap-3 rounded-lg px-3 py-3 font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
                       isActive

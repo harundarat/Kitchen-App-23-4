@@ -9,6 +9,8 @@ interface InputWithButtonProps {
   className?: string;
   type?: "text" | "search" | "email";
   placeholder?: string;
+  ariaLabel?: string;
+  buttonLabel?: string;
   onFocus?: FocusEventHandler<HTMLInputElement | HTMLButtonElement>;
   onBlur?: FocusEventHandler<HTMLInputElement | HTMLButtonElement>;
   required?: boolean;
@@ -23,6 +25,8 @@ export default function InputWbtn({
   className = "",
   type = "text",
   placeholder,
+  ariaLabel,
+  buttonLabel = "Kirim",
   onFocus,
   onBlur,
   required,
@@ -47,6 +51,7 @@ export default function InputWbtn({
         className="bg-bg h-10 w-full rounded-l-full pr-1 pl-4 outline-hidden"
         type={type}
         placeholder={placeholder}
+        aria-label={ariaLabel}
         value={input}
         onChange={(event) => {
           const nextValue = event.currentTarget.value.trimStart();
@@ -65,7 +70,7 @@ export default function InputWbtn({
       />
       <button
         type="button"
-        aria-label="Kirim"
+        aria-label={buttonLabel}
         className="group bg-primary text-bg flex h-full w-14 items-center justify-center rounded-r-full"
         onClick={submit}
         onFocus={onFocus}

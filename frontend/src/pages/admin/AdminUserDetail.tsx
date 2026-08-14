@@ -9,6 +9,7 @@ import RoundedButton from "../../components/common/RoundedButton";
 import { ApiError, getErrorMessage } from "../../services/api";
 import { adminService } from "../../services/admin";
 import type { AdminManagedUser, AdminUserUpdateInput } from "../../types/api";
+import { isValidObjectId } from "../../utils/validation";
 import {
   getAdminUserLoadErrorMessage,
   getAdminUserUpdateErrorMessage,
@@ -34,7 +35,7 @@ export default function AdminUserDetail() {
   const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
-    if (!id) {
+    if (!isValidObjectId(id)) {
       setError(new ApiError(400, "ID pengguna tidak valid"));
       setLoading(false);
       return;

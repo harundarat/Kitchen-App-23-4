@@ -9,6 +9,7 @@ import {
 } from "flowbite-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import InputWbtn from "../../components/common/InputWbtn";
 import { adminService } from "../../services/admin";
 import type { AdminRecipe } from "../../types/api";
 import { getAdminRecipeErrorMessage } from "./adminRecipeMessages";
@@ -59,21 +60,17 @@ export default function AdminRecipes() {
             Lihat resep yang dipublikasikan pengguna.
           </p>
         </div>
-        <label className="relative block w-full sm:max-w-sm">
-          <span className="sr-only">Cari resep</span>
-          <Icon
-            icon="ri:search-line"
-            className="text-primary/50 absolute top-1/2 left-3 -translate-y-1/2"
-            width={20}
-          />
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Cari judul resep"
-            className="bg-bg focus:border-primary focus:ring-primary border-primary/20 text-primary w-full rounded-full border py-2 pr-4 pl-10"
-          />
-        </label>
+        <InputWbtn
+          type="search"
+          value={search}
+          onChange={setSearch}
+          onClick={setSearch}
+          placeholder="Cari judul resep"
+          ariaLabel="Cari resep"
+          buttonLabel="Cari resep"
+          iconify="ri:search-line"
+          className="w-full sm:max-w-sm"
+        />
       </div>
 
       {loading ? (

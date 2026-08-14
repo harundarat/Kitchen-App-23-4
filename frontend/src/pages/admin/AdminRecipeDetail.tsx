@@ -11,6 +11,7 @@ import {
 import { ApiError } from "../../services/api";
 import { adminService } from "../../services/admin";
 import type { AdminRecipeDetail } from "../../types/api";
+import { isValidObjectId } from "../../utils/validation";
 import { getAdminRecipeErrorMessage } from "./adminRecipeMessages";
 
 export default function AdminRecipeDetail() {
@@ -22,7 +23,7 @@ export default function AdminRecipeDetail() {
   const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
-    if (!id) {
+    if (!isValidObjectId(id)) {
       setError(new ApiError(400, "ID resep tidak valid"));
       setLoading(false);
       return;

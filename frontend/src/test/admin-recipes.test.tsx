@@ -141,13 +141,12 @@ describe("admin recipe management", () => {
     ).toBeInTheDocument();
     optional.unmount();
 
-    service.getRecipe.mockRejectedValueOnce(
-      new ApiError(400, "Invalid recipe id"),
-    );
+    service.getRecipe.mockClear();
     const invalid = renderDetail("invalid");
     expect(
       await screen.findByText("ID resep tidak valid."),
     ).toBeInTheDocument();
+    expect(service.getRecipe).not.toHaveBeenCalled();
     invalid.unmount();
 
     service.getRecipe.mockRejectedValueOnce(new ApiError(404, "Not found"));

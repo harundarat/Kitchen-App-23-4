@@ -151,7 +151,8 @@ describe("administrator routes and shell", () => {
     expect(screen.getByText("Resep terlindungi")).toBeInTheDocument();
   });
 
-  it("uses URL-backed active navigation and accessible drawer controls", () => {
+  it("uses URL-backed active navigation and keeps collapsed links named", async () => {
+    const user = userEvent.setup();
     renderAdminLayout(sessionValue("admin"));
 
     expect(screen.getByText("Daftar resep")).toBeInTheDocument();
@@ -165,6 +166,16 @@ describe("administrator routes and shell", () => {
     expect(
       screen.getByRole("button", { name: "Ciutkan navigasi admin" }),
     ).toHaveAttribute("aria-expanded", "true");
+
+    await user.click(
+      screen.getByRole("button", { name: "Ciutkan navigasi admin" }),
+    );
+    const collapsedRecipeLink = screen
+      .getAllByRole("link", { name: "Resep" })
+      .find((link) => link.textContent === "");
+    expect(collapsedRecipeLink).toHaveAttribute("aria-label", "Resep");
+    collapsedRecipeLink?.focus();
+    expect(collapsedRecipeLink).toHaveFocus();
   });
 
   it("returns to a protected deep link after administrator login", async () => {

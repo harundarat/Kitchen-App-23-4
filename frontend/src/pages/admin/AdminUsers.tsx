@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Link } from "react-router-dom";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
+import InputWbtn from "../../components/common/InputWbtn";
 import { getErrorMessage } from "../../services/api";
 import { adminService } from "../../services/admin";
 import type { AdminManagedUser } from "../../types/api";
@@ -88,21 +89,17 @@ export default function AdminUsers() {
             Kelola akun pengguna KitchenCraft.
           </p>
         </div>
-        <label className="relative block w-full sm:max-w-sm">
-          <span className="sr-only">Cari pengguna</span>
-          <Icon
-            icon="ri:search-line"
-            className="text-primary/50 absolute top-1/2 left-3 -translate-y-1/2"
-            width={20}
-          />
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Cari username atau nama"
-            className="bg-bg focus:border-primary focus:ring-primary border-primary/20 text-primary w-full rounded-full border py-2 pr-4 pl-10"
-          />
-        </label>
+        <InputWbtn
+          type="search"
+          value={search}
+          onChange={setSearch}
+          onClick={setSearch}
+          placeholder="Cari username atau nama"
+          ariaLabel="Cari pengguna"
+          buttonLabel="Cari pengguna"
+          iconify="ri:search-line"
+          className="w-full sm:max-w-sm"
+        />
       </div>
 
       {loading ? (

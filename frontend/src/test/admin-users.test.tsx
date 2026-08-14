@@ -181,6 +181,15 @@ describe("admin user management", () => {
     expect(await screen.findByText("Daftar pengguna")).toBeInTheDocument();
   });
 
+  it("rejects malformed user IDs without requesting user details", async () => {
+    renderDetail("invalid");
+
+    expect(
+      await screen.findByText("ID pengguna tidak valid."),
+    ).toBeInTheDocument();
+    expect(service.getUser).not.toHaveBeenCalled();
+  });
+
   it("maps validation, authorization, not-found, conflict, and server failures to clear feedback", () => {
     expect(getAdminUserLoadErrorMessage(new ApiError(400, "bad"))).toBe(
       "ID pengguna tidak valid.",

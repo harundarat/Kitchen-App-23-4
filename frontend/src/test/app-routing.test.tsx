@@ -4,6 +4,8 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import App from "../App";
 
+const adminLayoutImport = vi.hoisted(() => ({ count: 0 }));
+
 vi.mock("../context/userContext", () => ({
   UserContextProvider: ({ children }: { children: ReactNode }) => children,
 }));
@@ -37,6 +39,7 @@ vi.mock("../components/layouts/RequireRole", async () => {
 });
 
 vi.mock("../components/layouts/AdminLayout", async () => {
+  adminLayoutImport.count += 1;
   const { Outlet } =
     await vi.importActual<typeof import("react-router-dom")>(
       "react-router-dom",
@@ -71,6 +74,7 @@ describe("application catch-all routes", () => {
     expect(screen.getByText("Consumer navigation")).toBeInTheDocument();
     expect(screen.getByText("Consumer footer")).toBeInTheDocument();
     expect(screen.queryByText("Admin navigation")).not.toBeInTheDocument();
+    expect(adminLayoutImport.count).toBe(0);
   });
 
   it("keeps unknown admin routes inside the admin shell", async () => {
@@ -84,5 +88,6 @@ describe("application catch-all routes", () => {
     expect(screen.getByText("Admin navigation")).toBeInTheDocument();
     expect(screen.queryByText("Consumer navigation")).not.toBeInTheDocument();
     expect(screen.queryByText("Consumer footer")).not.toBeInTheDocument();
+    expect(adminLayoutImport.count).toBe(1);
   });
 });

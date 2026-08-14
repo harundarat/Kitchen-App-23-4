@@ -1,0 +1,1 @@
+function e(e){return typeof e==`string`&&/^[a-f\d]{24}$/i.test(e)}export{e as t};
