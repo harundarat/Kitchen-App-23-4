@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import {
@@ -203,6 +203,31 @@ function GuardedStatefulSessionProbe({
       <label htmlFor="guarded-session-draft">Draft</label>
       <input
         id="guarded-session-draft"
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+      />
+    </>
+  );
+}
+
+function UserDependentDraftProbe() {
+  const { isUser, user } = useUser();
+  const [draft, setDraft] = useState("");
+  const [userEffectRuns, setUserEffectRuns] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    setDraft(`Profil ${user.username}`);
+    setUserEffectRuns((current) => current + 1);
+  }, [user]);
+
+  return (
+    <>
+      <p data-testid="draft-authorization">{String(isUser)}</p>
+      <p data-testid="user-effect-runs">{userEffectRuns}</p>
+      <label htmlFor="user-dependent-draft">Bio draft</label>
+      <input
+        id="user-dependent-draft"
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
       />
@@ -858,6 +883,68 @@ describe("UserContextProvider", () => {
     expect(draft.closest("[inert]")).toBeNull();
   });
 
+  it("preserves user-dependent draft state when revalidation confirms the same principal", async () => {
+    let resolveRevalidation!: (response: Response) => void;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(sessionResponse())
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveRevalidation = resolve;
+          }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const interaction = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <MemoryRouter initialEntries={["/profile/koki/edit"]}>
+          <Routes>
+            <Route element={<RequireUser />}>
+              <Route
+                path="/profile/koki/edit"
+                element={<UserDependentDraftProbe />}
+              />
+            </Route>
+            <Route path="/" element={<p>Beranda konsumen</p>} />
+          </Routes>
+        </MemoryRouter>
+      </UserContextProvider>,
+    );
+
+    const draft = await screen.findByLabelText("Bio draft");
+    await waitFor(() => expect(draft).toHaveValue("Profil koki"));
+    expect(screen.getByTestId("user-effect-runs")).toHaveTextContent("1");
+    await interaction.clear(draft);
+    await interaction.type(draft, "perubahan belum tersimpan");
+
+    act(() => reportExternalSessionChange());
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    expect(screen.getByTestId("draft-authorization")).toHaveTextContent(
+      "false",
+    );
+    expect(draft).toHaveValue("perubahan belum tersimpan");
+    expect(draft.closest("[inert]")).toHaveAttribute("hidden");
+
+    await act(async () => {
+      resolveRevalidation(sessionResponse());
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("draft-authorization")).toHaveTextContent(
+        "true",
+      );
+    });
+
+    expect(screen.getByLabelText("Bio draft")).toBe(draft);
+    expect(draft).toHaveValue("perubahan belum tersimpan");
+    expect(screen.getByTestId("user-effect-runs")).toHaveTextContent("1");
+  });
+
   it("quarantines a guarded consumer route during deferred admin replacement", async () => {
     let resolveReplacement!: (response: Response) => void;
     const fetchMock = vi
@@ -1165,6 +1252,65 @@ describe("UserContextProvider", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("quarantines and removes a guarded admin route after cross-tab logout", async () => {
+    let resolveLogoutConfirmation!: (response: Response) => void;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(sessionResponse("admin", "pengelola", "admin-1"))
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveLogoutConfirmation = resolve;
+          }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const interaction = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <MemoryRouter initialEntries={["/admin/users"]}>
+          <Routes>
+            <Route element={<RequireAdmin />}>
+              <Route
+                path="/admin/users"
+                element={<GuardedStatefulSessionProbe requiredRole="admin" />}
+              />
+            </Route>
+            <Route path="/admin/login" element={<p>Login administrator</p>} />
+          </Routes>
+        </MemoryRouter>
+      </UserContextProvider>,
+    );
+
+    const draft = await screen.findByLabelText("Draft");
+    await interaction.type(draft, "draft admin");
+    act(() => reportExternalSessionChange());
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Memuat sesi...");
+    expect(screen.getByTestId("protected-authorization")).toHaveTextContent(
+      "false",
+    );
+    expect(draft).toHaveValue("draft admin");
+    expect(draft.closest("[inert]")).toHaveAttribute("hidden");
+
+    await act(async () => {
+      resolveLogoutConfirmation(
+        new Response(JSON.stringify({ error: "Authentication required" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    });
+
+    expect(await screen.findByText("Login administrator")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Draft")).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("coalesces paired visibility and focus activation into one refresh", async () => {
     const fetchMock = setupFetch(
       sessionResponse("user", "koki-a", "user-a"),
@@ -1202,6 +1348,63 @@ describe("UserContextProvider", () => {
         document.dispatchEvent(new Event("visibilitychange"));
         window.dispatchEvent(new Event("focus"));
       });
+
+      expect(
+        await screen.findByText("Sesi untuk koki-b: pengguna"),
+      ).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      if (visibilityDescriptor) {
+        Object.defineProperty(
+          document,
+          "visibilityState",
+          visibilityDescriptor,
+        );
+      } else {
+        delete (document as { visibilityState?: string }).visibilityState;
+      }
+    }
+  });
+
+  it("coalesces focus before visibility becomes visible into one refresh", async () => {
+    const fetchMock = setupFetch(
+      sessionResponse("user", "koki-a", "user-a"),
+      sessionResponse("user", "koki-b", "user-b"),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const visibilityDescriptor = Object.getOwnPropertyDescriptor(
+      document,
+      "visibilityState",
+    );
+
+    try {
+      render(
+        <UserContextProvider>
+          <SessionProbe />
+        </UserContextProvider>,
+      );
+      await screen.findByText("Sesi untuk koki-a: pengguna");
+
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+      act(() => {
+        window.dispatchEvent(new Event("blur"));
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+
+      act(() => window.dispatchEvent(new Event("focus")));
+      await act(async () => Promise.resolve());
+      expect(fetchMock).toHaveBeenCalledOnce();
+
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      act(() => document.dispatchEvent(new Event("visibilitychange")));
 
       expect(
         await screen.findByText("Sesi untuk koki-b: pengguna"),
@@ -1402,6 +1605,55 @@ describe("UserContextProvider", () => {
 
     expect(screen.getByTestId("session-status")).toHaveTextContent("anonymous");
     expect(screen.getByTestId("session-user")).toHaveTextContent("none");
+  });
+
+  it("discards a refresh rejection superseded by logout", async () => {
+    let rejectStaleAuth!: (reason: Error) => void;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(sessionResponse("user", "koki-a", "user-a"))
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((_resolve, reject) => {
+            rejectStaleAuth = reject;
+          }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const interaction = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <SessionRefreshLogoutProbe />
+      </UserContextProvider>,
+    );
+    await screen.findByText("koki-a");
+
+    act(() => reportExternalSessionChange());
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    await interaction.click(
+      screen.getByRole("button", { name: "Logout saat revalidasi" }),
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("session-status")).toHaveTextContent(
+        "anonymous",
+      );
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
+    await act(async () => {
+      rejectStaleAuth(new TypeError("Failed to fetch"));
+    });
+
+    act(() => window.dispatchEvent(new Event("focus")));
+    await act(async () => Promise.resolve());
+
+    expect(screen.getByTestId("session-status")).toHaveTextContent("anonymous");
+    expect(screen.getByTestId("session-user")).toHaveTextContent("none");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it("preserves but quarantines a confirmed principal when revalidation has a server failure", async () => {

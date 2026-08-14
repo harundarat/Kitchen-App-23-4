@@ -68,23 +68,34 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
   const refreshDrain = useRef<Promise<SessionRefreshResult> | null>(null);
   const activationNeedsRefresh = useRef(false);
 
-  const commitPrincipal = useCallback((nextUser: SessionUser | null) => {
-    const nextPrincipal = nextUser
-      ? `${nextUser.role}\u0000${nextUser.id}\u0000${nextUser.username}`
-      : null;
-    const previousPrincipal = confirmedPrincipalRef.current;
+  const commitPrincipal = useCallback(
+    (nextUser: SessionUser | null): SessionUser | null => {
+      const nextPrincipal = nextUser
+        ? `${nextUser.role}\u0000${nextUser.id}\u0000${nextUser.username}`
+        : null;
+      const previousPrincipal = confirmedPrincipalRef.current;
 
-    if (
-      previousPrincipal !== undefined &&
-      previousPrincipal !== nextPrincipal
-    ) {
-      setSessionEpoch((current) => current + 1);
-    }
+      if (
+        previousPrincipal !== undefined &&
+        previousPrincipal === nextPrincipal
+      ) {
+        return userRef.current;
+      }
 
-    confirmedPrincipalRef.current = nextPrincipal;
-    userRef.current = nextUser;
-    setUser(nextUser);
-  }, []);
+      if (
+        previousPrincipal !== undefined &&
+        previousPrincipal !== nextPrincipal
+      ) {
+        setSessionEpoch((current) => current + 1);
+      }
+
+      confirmedPrincipalRef.current = nextPrincipal;
+      userRef.current = nextUser;
+      setUser(nextUser);
+      return nextUser;
+    },
+    [],
+  );
 
   const performSessionRefresh = useCallback(
     async (
@@ -100,18 +111,15 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
           return { user: userRef.current, error: null };
         }
 
-        commitPrincipal(data.user);
+        const confirmedUser = commitPrincipal(data.user);
         setStatus("authenticated");
         setSessionError(null);
         toast.dismiss(SESSION_ERROR_TOAST_ID);
-        return { user: data.user, error: null };
+        return { user: confirmedUser, error: null };
       } catch (error) {
         if (signal?.aborted) return { user: userRef.current, error: null };
         if (generation !== requestedRefreshGeneration.current) {
-          return {
-            user: userRef.current,
-            error: error instanceof Error ? error : null,
-          };
+          return { user: userRef.current, error: null };
         }
 
         const isAnonymous = error instanceof ApiError && error.status === 401;
