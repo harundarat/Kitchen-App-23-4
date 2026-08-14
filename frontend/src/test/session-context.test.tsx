@@ -31,11 +31,16 @@ type ChannelListener = (event: MessageEvent) => void;
 class FakeBroadcastChannel {
   static channels = new Map<string, Set<FakeBroadcastChannel>>();
   static postedMessages: unknown[] = [];
+  static throwOnConstruct = false;
+  static throwOnPostMessage = false;
 
   readonly name: string;
   private readonly listeners = new Set<ChannelListener>();
 
   constructor(name: string) {
+    if (FakeBroadcastChannel.throwOnConstruct) {
+      throw new Error("BroadcastChannel construction failed");
+    }
     this.name = name;
     const channels = FakeBroadcastChannel.channels.get(name) ?? new Set();
     channels.add(this);
@@ -47,6 +52,9 @@ class FakeBroadcastChannel {
   }
 
   postMessage(data: unknown) {
+    if (FakeBroadcastChannel.throwOnPostMessage) {
+      throw new Error("BroadcastChannel post failed");
+    }
     FakeBroadcastChannel.postedMessages.push(data);
     FakeBroadcastChannel.channels.get(this.name)?.forEach((channel) => {
       if (channel === this) return;
@@ -179,6 +187,29 @@ function StatefulSessionProbe() {
   );
 }
 
+function GuardedStatefulSessionProbe({
+  requiredRole,
+}: {
+  requiredRole: "user" | "admin";
+}) {
+  const { isAdmin, isUser, user } = useUser();
+  const [draft, setDraft] = useState("");
+  const authorized = requiredRole === "admin" ? isAdmin : isUser;
+
+  return (
+    <>
+      <p>Principal aktif: {user?.username ?? "anonim"}</p>
+      <p data-testid="protected-authorization">{String(authorized)}</p>
+      <label htmlFor="guarded-session-draft">Draft</label>
+      <input
+        id="guarded-session-draft"
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+      />
+    </>
+  );
+}
+
 function SessionRefreshLogoutProbe() {
   const { logout, refreshSession, status, user } = useUser();
 
@@ -281,6 +312,8 @@ describe("UserContextProvider", () => {
     localStorage.clear();
     sessionStorage.clear();
     FakeBroadcastChannel.postedMessages = [];
+    FakeBroadcastChannel.throwOnConstruct = false;
+    FakeBroadcastChannel.throwOnPostMessage = false;
   });
 
   it("revalidates on first activation when mounted inactive without BroadcastChannel", async () => {
@@ -354,6 +387,316 @@ describe("UserContextProvider", () => {
         delete (document as { visibilityState?: string }).visibilityState;
       }
     }
+  });
+
+  it("retries initial network failure when a hidden provider first activates", async () => {
+    const broadcastChannelDescriptor = Object.getOwnPropertyDescriptor(
+      globalThis,
+      "BroadcastChannel",
+    );
+    const visibilityDescriptor = Object.getOwnPropertyDescriptor(
+      document,
+      "visibilityState",
+    );
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValueOnce(sessionResponse());
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    vi.mocked(document.hasFocus).mockReturnValue(false);
+
+    try {
+      Object.defineProperty(globalThis, "BroadcastChannel", {
+        configurable: true,
+        value: undefined,
+        writable: true,
+      });
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+
+      render(
+        <UserContextProvider>
+          <SessionProbe />
+        </UserContextProvider>,
+      );
+      expect(
+        await screen.findByText("Gangguan sesi: Failed to fetch"),
+      ).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledOnce();
+
+      vi.mocked(document.hasFocus).mockReturnValue(true);
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      act(() => {
+        document.dispatchEvent(new Event("visibilitychange"));
+        window.dispatchEvent(new Event("focus"));
+      });
+
+      expect(
+        await screen.findByText("Sesi untuk koki: pengguna"),
+      ).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      if (broadcastChannelDescriptor) {
+        Object.defineProperty(
+          globalThis,
+          "BroadcastChannel",
+          broadcastChannelDescriptor,
+        );
+      } else {
+        delete (globalThis as { BroadcastChannel?: unknown }).BroadcastChannel;
+      }
+      if (visibilityDescriptor) {
+        Object.defineProperty(
+          document,
+          "visibilityState",
+          visibilityDescriptor,
+        );
+      } else {
+        delete (document as { visibilityState?: string }).visibilityState;
+      }
+    }
+  });
+
+  it("retries an initial 503 when a hidden provider first activates", async () => {
+    const broadcastChannelDescriptor = Object.getOwnPropertyDescriptor(
+      globalThis,
+      "BroadcastChannel",
+    );
+    const visibilityDescriptor = Object.getOwnPropertyDescriptor(
+      document,
+      "visibilityState",
+    );
+    const fetchMock = setupFetch(
+      new Response(JSON.stringify({ error: "Gateway unavailable" }), {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      }),
+      sessionResponse(),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    vi.mocked(document.hasFocus).mockReturnValue(false);
+
+    try {
+      Object.defineProperty(globalThis, "BroadcastChannel", {
+        configurable: true,
+        value: undefined,
+        writable: true,
+      });
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+
+      render(
+        <UserContextProvider>
+          <SessionProbe />
+        </UserContextProvider>,
+      );
+      expect(
+        await screen.findByText("Gangguan sesi: Gateway unavailable"),
+      ).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledOnce();
+
+      vi.mocked(document.hasFocus).mockReturnValue(true);
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      act(() => {
+        document.dispatchEvent(new Event("visibilitychange"));
+        window.dispatchEvent(new Event("focus"));
+      });
+
+      expect(
+        await screen.findByText("Sesi untuk koki: pengguna"),
+      ).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      if (broadcastChannelDescriptor) {
+        Object.defineProperty(
+          globalThis,
+          "BroadcastChannel",
+          broadcastChannelDescriptor,
+        );
+      } else {
+        delete (globalThis as { BroadcastChannel?: unknown }).BroadcastChannel;
+      }
+      if (visibilityDescriptor) {
+        Object.defineProperty(
+          document,
+          "visibilityState",
+          visibilityDescriptor,
+        );
+      } else {
+        delete (document as { visibilityState?: string }).visibilityState;
+      }
+    }
+  });
+
+  it("revalidates a visible provider on its first genuine focus", async () => {
+    const broadcastChannelDescriptor = Object.getOwnPropertyDescriptor(
+      globalThis,
+      "BroadcastChannel",
+    );
+    const visibilityDescriptor = Object.getOwnPropertyDescriptor(
+      document,
+      "visibilityState",
+    );
+    const fetchMock = setupFetch(
+      sessionResponse("user", "koki-a", "user-a"),
+      sessionResponse("user", "koki-b", "user-b"),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    vi.mocked(document.hasFocus).mockReturnValue(false);
+
+    try {
+      Object.defineProperty(globalThis, "BroadcastChannel", {
+        configurable: true,
+        value: undefined,
+        writable: true,
+      });
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+
+      render(
+        <UserContextProvider>
+          <SessionProbe />
+        </UserContextProvider>,
+      );
+      await screen.findByText("Sesi untuk koki-a: pengguna");
+      expect(fetchMock).toHaveBeenCalledOnce();
+
+      vi.mocked(document.hasFocus).mockReturnValue(true);
+      act(() => window.dispatchEvent(new Event("focus")));
+
+      expect(
+        await screen.findByText("Sesi untuk koki-b: pengguna"),
+      ).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      if (broadcastChannelDescriptor) {
+        Object.defineProperty(
+          globalThis,
+          "BroadcastChannel",
+          broadcastChannelDescriptor,
+        );
+      } else {
+        delete (globalThis as { BroadcastChannel?: unknown }).BroadcastChannel;
+      }
+      if (visibilityDescriptor) {
+        Object.defineProperty(
+          document,
+          "visibilityState",
+          visibilityDescriptor,
+        );
+      } else {
+        delete (document as { visibilityState?: string }).visibilityState;
+      }
+    }
+  });
+
+  it("uses activation fallback when BroadcastChannel construction fails", async () => {
+    const visibilityDescriptor = Object.getOwnPropertyDescriptor(
+      document,
+      "visibilityState",
+    );
+    const fetchMock = setupFetch(
+      sessionResponse("user", "koki-a", "user-a"),
+      sessionResponse("user", "koki-b", "user-b"),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    vi.mocked(document.hasFocus).mockReturnValue(false);
+    FakeBroadcastChannel.throwOnConstruct = true;
+
+    try {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "hidden",
+      });
+      render(
+        <UserContextProvider>
+          <SessionProbe />
+        </UserContextProvider>,
+      );
+      await screen.findByText("Sesi untuk koki-a: pengguna");
+
+      vi.mocked(document.hasFocus).mockReturnValue(true);
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        value: "visible",
+      });
+      act(() => {
+        document.dispatchEvent(new Event("visibilitychange"));
+        window.dispatchEvent(new Event("focus"));
+      });
+
+      expect(
+        await screen.findByText("Sesi untuk koki-b: pengguna"),
+      ).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      FakeBroadcastChannel.throwOnConstruct = false;
+      if (visibilityDescriptor) {
+        Object.defineProperty(
+          document,
+          "visibilityState",
+          visibilityDescriptor,
+        );
+      } else {
+        delete (document as { visibilityState?: string }).visibilityState;
+      }
+    }
+  });
+
+  it("keeps local login refresh working when BroadcastChannel posting fails", async () => {
+    const fetchMock = setupFetch(
+      new Response(JSON.stringify({ error: "Authentication required" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+      new Response(JSON.stringify({ message: "Logged in" }), {
+        headers: { "Content-Type": "application/json" },
+      }),
+      sessionResponse(),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    FakeBroadcastChannel.throwOnPostMessage = true;
+    const interaction = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <Login />
+        <SessionProbe />
+      </UserContextProvider>,
+    );
+    await screen.findByText("Sesi anonim");
+    await interaction.type(screen.getByLabelText("Email"), "user@example.test");
+    await interaction.type(screen.getByLabelText("Password"), "password");
+    await interaction.click(screen.getByRole("button", { name: "Masuk" }));
+
+    expect(
+      await screen.findByText("Sesi untuk koki: pengguna"),
+    ).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(FakeBroadcastChannel.postedMessages).toEqual([]);
   });
 
   it("maps a resolved user session without storing a token in web storage", async () => {
@@ -452,6 +795,291 @@ describe("UserContextProvider", () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
 
     expect(screen.getByLabelText("Draft")).toHaveValue("tetap ada");
+  });
+
+  it("keeps a guarded same-principal route mounted during revalidation", async () => {
+    let resolveRevalidation!: (response: Response) => void;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(sessionResponse())
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveRevalidation = resolve;
+          }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const interaction = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <MemoryRouter initialEntries={["/profile/koki"]}>
+          <Routes>
+            <Route element={<RequireUser />}>
+              <Route
+                path="/profile/koki"
+                element={<GuardedStatefulSessionProbe requiredRole="user" />}
+              />
+            </Route>
+            <Route path="/" element={<p>Beranda konsumen</p>} />
+          </Routes>
+        </MemoryRouter>
+      </UserContextProvider>,
+    );
+
+    const draft = await screen.findByLabelText("Draft");
+    await interaction.type(draft, "tetap ada");
+    act(() => reportExternalSessionChange());
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Memuat sesi...");
+    expect(screen.getByTestId("protected-authorization")).toHaveTextContent(
+      "false",
+    );
+    expect(draft).toHaveValue("tetap ada");
+    expect(draft.closest("[inert]")).toHaveAttribute("hidden");
+    expect(draft.closest("[inert]")).toHaveAttribute("aria-hidden", "true");
+
+    await act(async () => {
+      resolveRevalidation(sessionResponse());
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByLabelText("Draft")).toBe(draft);
+    expect(screen.getByTestId("protected-authorization")).toHaveTextContent(
+      "true",
+    );
+    expect(draft).toHaveValue("tetap ada");
+    expect(draft.closest("[inert]")).toBeNull();
+  });
+
+  it("quarantines a guarded consumer route during deferred admin replacement", async () => {
+    let resolveReplacement!: (response: Response) => void;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(sessionResponse())
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveReplacement = resolve;
+          }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const interaction = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <MemoryRouter initialEntries={["/profile/koki"]}>
+          <Routes>
+            <Route element={<RequireUser />}>
+              <Route
+                path="/profile/koki"
+                element={<GuardedStatefulSessionProbe requiredRole="user" />}
+              />
+            </Route>
+            <Route path="/" element={<p>Beranda konsumen</p>} />
+          </Routes>
+        </MemoryRouter>
+      </UserContextProvider>,
+    );
+
+    const draft = await screen.findByLabelText("Draft");
+    await interaction.type(draft, "draft konsumen");
+    act(() => reportExternalSessionChange());
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Memuat sesi...");
+    expect(screen.getByTestId("protected-authorization")).toHaveTextContent(
+      "false",
+    );
+    expect(draft).toHaveValue("draft konsumen");
+    expect(draft.closest("[inert]")).toHaveAttribute("hidden");
+
+    await act(async () => {
+      resolveReplacement(sessionResponse("admin", "pengelola", "admin-1"));
+    });
+
+    expect(await screen.findByText("Beranda konsumen")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Draft")).not.toBeInTheDocument();
+  });
+
+  it("quarantines a guarded admin route during deferred consumer replacement", async () => {
+    let resolveReplacement!: (response: Response) => void;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(sessionResponse("admin", "pengelola", "admin-1"))
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveReplacement = resolve;
+          }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const interaction = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <MemoryRouter initialEntries={["/admin/users"]}>
+          <Routes>
+            <Route element={<RequireAdmin />}>
+              <Route
+                path="/admin/users"
+                element={<GuardedStatefulSessionProbe requiredRole="admin" />}
+              />
+            </Route>
+            <Route path="/admin/login" element={<p>Login administrator</p>} />
+          </Routes>
+        </MemoryRouter>
+      </UserContextProvider>,
+    );
+
+    const draft = await screen.findByLabelText("Draft");
+    await interaction.type(draft, "draft admin");
+    act(() => reportExternalSessionChange());
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Memuat sesi...");
+    expect(screen.getByTestId("protected-authorization")).toHaveTextContent(
+      "false",
+    );
+    expect(draft).toHaveValue("draft admin");
+    expect(draft.closest("[inert]")).toHaveAttribute("hidden");
+
+    await act(async () => {
+      resolveReplacement(sessionResponse());
+    });
+
+    expect(await screen.findByText("Login administrator")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Draft")).not.toBeInTheDocument();
+  });
+
+  it("keeps a guarded consumer route quarantined across a network failure", async () => {
+    const errorToast = vi.spyOn(toast, "error");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(sessionResponse())
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValueOnce(sessionResponse());
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const interaction = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <MemoryRouter initialEntries={["/profile/koki"]}>
+          <Routes>
+            <Route element={<RequireUser />}>
+              <Route
+                path="/profile/koki"
+                element={<GuardedStatefulSessionProbe requiredRole="user" />}
+              />
+            </Route>
+            <Route path="/" element={<p>Beranda konsumen</p>} />
+          </Routes>
+        </MemoryRouter>
+      </UserContextProvider>,
+    );
+
+    const draft = await screen.findByLabelText("Draft");
+    await interaction.type(draft, "draft konsumen");
+    act(() => reportExternalSessionChange());
+    await waitFor(() => {
+      expect(errorToast).toHaveBeenCalledWith("Failed to fetch", {
+        id: "session-refresh-error",
+      });
+    });
+
+    expect(screen.getByRole("status")).toHaveTextContent("Memuat sesi...");
+    expect(screen.getByTestId("protected-authorization")).toHaveTextContent(
+      "false",
+    );
+    expect(draft).toHaveValue("draft konsumen");
+    expect(draft.closest("[inert]")).toHaveAttribute("hidden");
+
+    act(() => window.dispatchEvent(new Event("focus")));
+    await waitFor(() => {
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByLabelText("Draft")).toBe(draft);
+    expect(screen.getByTestId("protected-authorization")).toHaveTextContent(
+      "true",
+    );
+    expect(draft).toHaveValue("draft konsumen");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("keeps a guarded admin route quarantined across a 503 failure", async () => {
+    const errorToast = vi.spyOn(toast, "error");
+    const fetchMock = setupFetch(
+      sessionResponse("admin", "pengelola", "admin-1"),
+      new Response(JSON.stringify({ error: "Gateway unavailable" }), {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      }),
+      sessionResponse("admin", "pengelola", "admin-1"),
+    );
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      new AbortController().signal,
+    );
+    const interaction = userEvent.setup();
+
+    render(
+      <UserContextProvider>
+        <MemoryRouter initialEntries={["/admin/users"]}>
+          <Routes>
+            <Route element={<RequireAdmin />}>
+              <Route
+                path="/admin/users"
+                element={<GuardedStatefulSessionProbe requiredRole="admin" />}
+              />
+            </Route>
+            <Route path="/admin/login" element={<p>Login administrator</p>} />
+          </Routes>
+        </MemoryRouter>
+      </UserContextProvider>,
+    );
+
+    const draft = await screen.findByLabelText("Draft");
+    await interaction.type(draft, "draft admin");
+    act(() => reportExternalSessionChange());
+    await waitFor(() => {
+      expect(errorToast).toHaveBeenCalledWith("Gateway unavailable", {
+        id: "session-refresh-error",
+      });
+    });
+
+    expect(screen.getByRole("status")).toHaveTextContent("Memuat sesi...");
+    expect(screen.getByTestId("protected-authorization")).toHaveTextContent(
+      "false",
+    );
+    expect(draft).toHaveValue("draft admin");
+    expect(draft.closest("[inert]")).toHaveAttribute("hidden");
+
+    act(() => window.dispatchEvent(new Event("focus")));
+    await waitFor(() => {
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByLabelText("Draft")).toBe(draft);
+    expect(screen.getByTestId("protected-authorization")).toHaveTextContent(
+      "true",
+    );
+    expect(draft).toHaveValue("draft admin");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it("removes a stale consumer route when another tab installs an admin session", async () => {

@@ -130,7 +130,7 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
         const confirmedUser = userRef.current;
         if (!confirmedUser) setStatus("anonymous");
         setSessionError(sessionFailure);
-        activationNeedsRefresh.current = Boolean(confirmedUser);
+        if (confirmedUser) activationNeedsRefresh.current = true;
         toast.error(getErrorMessage(error, "Tidak dapat terhubung ke server"), {
           id: SESSION_ERROR_TOAST_ID,
         });

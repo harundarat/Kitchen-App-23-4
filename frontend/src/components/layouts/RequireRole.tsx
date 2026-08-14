@@ -14,21 +14,51 @@ function SessionFallback() {
   );
 }
 
+function ProtectedOutlet({ revalidating }: { revalidating: boolean }) {
+  return (
+    <>
+      <div
+        className={revalidating ? "hidden" : "contents"}
+        hidden={revalidating}
+        inert={revalidating}
+        aria-hidden={revalidating || undefined}
+      >
+        <Outlet />
+      </div>
+      {revalidating && <SessionFallback />}
+    </>
+  );
+}
+
 export function RequireAdmin() {
   const location = useLocation();
-  const { isAdmin, status } = useUser();
+  const { isAdmin, status, user } = useUser();
+  const revalidating = status === "loading" && user?.role === "admin";
 
-  if (status === "loading") return <SessionFallback />;
+  if (status === "loading") {
+    return revalidating ? (
+      <ProtectedOutlet revalidating />
+    ) : (
+      <SessionFallback />
+    );
+  }
   if (!isAdmin) {
     return <Navigate to="/admin/login" replace state={{ from: location }} />;
   }
-  return <Outlet />;
+  return <ProtectedOutlet revalidating={false} />;
 }
 
 export function RequireUser() {
-  const { isUser, status } = useUser();
+  const { isUser, status, user } = useUser();
+  const revalidating = status === "loading" && user?.role === "user";
 
-  if (status === "loading") return <SessionFallback />;
+  if (status === "loading") {
+    return revalidating ? (
+      <ProtectedOutlet revalidating />
+    ) : (
+      <SessionFallback />
+    );
+  }
   if (!isUser) return <Navigate to="/" replace />;
-  return <Outlet />;
+  return <ProtectedOutlet revalidating={false} />;
 }
